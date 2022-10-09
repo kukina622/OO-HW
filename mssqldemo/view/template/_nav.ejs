@@ -1,0 +1,162 @@
+<nav class="navbar sticky-top navbar-light bg-light navbar-expand-md">
+  <div class="container">
+    <a class="navbar-brand" href="#">Navbar</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Link</a>
+        </li>
+        <li class="nav-item">
+          <a id="cartButton" href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#list">
+            <i class="fas fa-shopping-cart"></i>
+            購物車
+          </a>
+          
+        </li>
+        <li class="nav-item">
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Dropdown
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" href="#">Action</a></li>
+            <li><a class="dropdown-item" href="#">Another action</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item" href="#">Something else here</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-danger" href="/logout">Logout</a>
+        </li>
+      </ul>
+      <div class="d-flex">
+        <input id="search" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success" onclick="search()">Search</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const action = '<%=action%>'
+    const options = {
+      credentials: "include"
+    }
+    const searchInput = document.getElementById('search')
+    searchInput.addEventListener("keyup", async (e) => {
+      if (e.key === "Enter" || e.keyCode === 13) {
+        await search()
+      }
+    })
+    var total = 0
+
+    const search = async () => {
+      let searchText = searchInput.value
+      searchText = (searchText.length > 0) ? `/${searchText}` : ''
+      const url = `/api/${action}${searchText}`
+      console.log(url)
+      const res = await fetch(url)
+      const json = await res.json()
+      console.log(json)
+      render(json)
+    }
+
+    const submit = () => {
+      window.location = '/checkout'
+    }
+
+    const deleteCart = async (cTime, price) => {
+      const res = await fetch(`/api/cart/delete/${cTime}`)
+      const json = await res.json()
+
+      if (json.result === 'ok') {
+        total -= price
+        document.getElementById(`cart-item-${cTime}`).innerHTML = ''
+        document.getElementById('total').innerHTML = '$' + total
+        if (total == 0) {
+          document.getElementById('checkout').disabled = true
+        }
+      }
+    }
+
+    const getCart = async () => {
+      let checkoutButton = document.getElementById('checkout')
+
+      const url = `/api/cart`
+      const res = await fetch(url, options)
+      const json = await res.json()
+      console.log(json)
+      const cart = json.cart
+      var html = ''
+      for (const item of cart) {
+        html += renderRow(item)
+      }
+      document.getElementById('data-area').innerHTML = html
+      document.getElementById('total').innerHTML = '$' + json.total
+      total = json.total
+
+      checkoutButton.disabled = (total == 0)
+    }
+
+    const renderRow = (item) => {
+      return `
+        <tr id="cart-item-${item.cTime}">
+          <td>${item.pName}</td>
+          <td class="text-right">$${item.unitPrice[0]}</td>
+          <td class="text-right">${item.count}</td>
+          <td class="text-right">$${item.price}</td>
+          <th><button onclick="deleteCart('${item.cTime}', ${item.price})" class="delete-btn btn btn-danger"> 
+              &times;
+            </button>
+          </td>
+        </tr>
+      `
+    }
+
+    document.getElementById('cartButton').addEventListener('click', async (e) => {
+      await getCart()
+    })
+  </script>
+</nav>
+
+<!-- Modal -->
+
+<div id="list" class="modal fade" aria-hidden="true" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"> 購物車</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-border">
+          <thead>
+            <tr>
+              <th>產品名稱</th>
+              <th class="text-right">單價</th>
+              <th class="text-right">數量</th>
+              <th class="text-right">總計</th>
+              <th>刪除</th>
+            </tr>
+          </thead>
+          <tbody id="data-area">
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <p id="total"></p>
+        <button id="checkout" onclick="submit()" class="btn btn-outline-primary">結帳</button>
+      </div>
+    </div>
+  </div>
+</div>

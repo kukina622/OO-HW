@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>測試</title>
+</head>
+
+<body>
+    <%= test1 %>
+    
+    <table frame="border" rules="all" border="1">
+      <caption>Product</caption>
+      <tr>
+        <th>pId</th>
+        <th>pName</th>
+        <th>pCount</th>
+        <th>unitPrice</th>
+        <th>rId</th>
+      </tr>
+      <% for(var i = 0; i < pdata.length; i++){ %>
+          <tr>
+              <td><%= pdata[i].pId %></td>
+              <td><%= pdata[i].pName %></td>
+              <td><%= pdata[i].pCount %></td>
+              <td><%= pdata[i].unitPrice %></td>
+              <td><%= pdata[i].rId %></td>
+          </tr>
+      <% } %>
+    </table>
+    
+    <br>
+    
+    <table frame="border" rules="all" border="1">
+      <caption>Member</caption>
+      <tr>
+        <th>mEmail</th>
+        <th>mPassword</th>
+        <th>birthday</th>
+        <th>mRegion</th>
+        <th>mName</th>
+        <th>isManager</th>
+      </tr>
+        <% for(var i = 0; i < mdata.length; i++){ %>
+            <tr>
+                <td><%= mdata[i].mEmail %></td>
+                <td><%= mdata[i].mPassword %></td>
+                <td><%= mdata[i].birthday %></td>
+                <td><%= mdata[i].mRegion %></td>
+                <td><%= mdata[i].mName %></td>
+                <td><%= mdata[i].isManager %></td>
+            </tr>
+        <% } %>
+    </table>
+
+    <br>
+    
+    <table frame="border" rules="all" border="1">
+      <caption>Restaurant</caption>
+      <tr>
+        <th>rId</th>
+        <th>rName</th>
+        <th>rRegion</th>
+        <th>phone</th>
+        <th>email</th>
+        <th>password</th>
+        <th>address</th>
+        <th>rIsAvailable</th>
+      </tr>
+        <% for(var i = 0; i < rdata.length; i++){ %>
+            <tr>
+                <td><%= rdata[i].rId %></td>
+                <td><%= rdata[i].rName %></td>
+                <td><%= rdata[i].rRegion %></td>
+                <td><%= rdata[i].phone %></td>
+                <td><%= rdata[i].email %></td> 
+                <td><%= rdata[i].password %></td>
+                <td><%= rdata[i].address %></td>
+                <td><%= rdata[i].rIsAvailable %></td>
+            </tr>
+        <% } %>
+    </table>
+
+    <br>
+
+    <table frame="border" rules="all" border="1">
+      <caption>Cart</caption>
+      <tr>
+        <th>mId</th>
+        <th>cTime</th>
+        <th>count</th>
+        <th>price</th>
+        <th>oId</th>
+        <th>pId</th>
+      </tr>
+      <% for(var i = 0; i < cdata.length; i++){ %>
+          <tr>
+              <td><%= cdata[i].mId %></td>
+              <td><%= cdata[i].cTime %></td>
+              <td><%= cdata[i].count %></td>
+              <td><%= cdata[i].price %></td>
+              <td><%= cdata[i].oId %></td>
+              <td><%= cdata[i].pId %></td>
+          </tr>
+      <% } %>
+    </table>
+
+    <br>
+
+    <table frame="border" rules="all" border="1">
+      <caption>Order</caption>
+      <tr>
+        <th>oId</th>
+        <th>oDate</th>
+        <th>estimateTime</th>
+        <th>total</th>
+        <th>mId</th>
+      </tr>
+      <% for(var i = 0; i < odata.length; i++){ %>
+          <tr>
+              <td><%= odata[i].oId %></td>
+              <td><%= odata[i].oDate %></td>
+              <td><%= odata[i].estimateTime %></td>
+              <td><%= odata[i].total %></td>
+              <td><%= odata[i].mId %></td>
+          </tr>
+      <% } %>
+    </table>
+    
+</body>
+
+</html>

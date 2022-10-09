@@ -1,0 +1,98 @@
+<nav class="navbar sticky-top navbar-light bg-light navbar-expand-md">
+    <div class="container">
+        <a class="navbar-brand" href="#">Navbar</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/manager">Manager</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/manager/product/add">新增</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="/logout">Logout</a>
+                </li>
+            </ul>
+            <div class="d-flex">
+                <input id="search" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success" onclick="search()">Search</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const action = ''
+        const options = {
+            credentials: "include"
+        }
+        const searchInput = document.getElementById('search')
+        searchInput.addEventListener("keyup", async (e) => {
+            if (e.key === "Enter" || e.keyCode === 13) {
+                await search()
+            }
+        })
+        var total = 0
+
+        const search = async () => {
+            let searchText = searchInput.value
+            searchText = (searchText.length > 0) ? `/${searchText}` : ''
+            const url = `/api/${action}${searchText}`
+            console.log(url)
+            const res = await fetch(url)
+            const json = await res.json()
+            console.log(json)
+            render(json)
+        }
+
+        const deleteCart = async (cTime, price) => {
+            const res = await fetch(`/api/cart/delete/${cTime}`)
+            const json = await res.json()
+
+            if (json.result === 'ok') {
+                total -= price
+                document.getElementById(`cart-item-${cTime}`).innerHTML = ''
+                document.getElementById('total').innerHTML = '$' + total
+                if (total == 0) {
+                    document.getElementById('checkout').disabled = true
+                }
+            }
+        }
+
+        const getCart = async () => {
+            let checkoutButton = document.getElementById('checkout')
+
+            const url = `/api/cart`
+            const res = await fetch(url, options)
+            const json = await res.json()
+            console.log(json)
+            const cart = json.cart
+            var html = ''
+            for (const item of cart) {
+                html += renderRow(item)
+            }
+            document.getElementById('data-area').innerHTML = html
+            document.getElementById('total').innerHTML = '$' + json.total
+            total = json.total
+
+            checkoutButton.disabled = (total == 0)
+        }
+
+        const renderRow = (item) => {
+            return `
+          <tr id="cart-item-${item.cTime}">
+            <td>${item.pName}</td>
+            <td class="text-right">$${item.unitPrice}</td>
+            <td class="text-right">${item.count}</td>
+            <td class="text-right">$${item.price}</td>
+            <th><button onclick="deleteCart('${item.cTime}', ${item.price})" class="delete-btn btn btn-danger"> 
+                &times;
+              </button>
+            </td>
+          </tr>
+        `
+        }
+    </script>
+</nav>
