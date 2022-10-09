@@ -73,7 +73,7 @@
     * rId
         * 餐點所屬餐廳，參考Restaurant的rId
 
-    5.	購物車 Cart
+5.	購物車 Cart
     * mId
         * 購物車所屬會員，參考Membe的mEmail
     * cTime
