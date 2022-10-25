@@ -91,7 +91,7 @@
 
 ## 實體關係圖
 
-<img src=".\result_pic\ER.jpeg"/>
+![ERD](/result_pic/ER.jpeg)
 
 說明: 
 * 一位會員(Member)可下多筆訂單(Order)，一筆訂單只能且一定屬於一位會員。
@@ -101,9 +101,9 @@
 
 ## 關聯綱目
 
-<img src=".\result_pic\RS.jpeg"/>
+![關聯綱目](/result_pic/RS.jpeg)
 
 ## 資料庫圖表
 
-<img src=".\result_pic\table_graph.jpeg"/>
+![資料庫圖表](/result_pic/table_graph.jpeg)
 
