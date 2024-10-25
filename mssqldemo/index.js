@@ -499,7 +499,7 @@ app.get('/manager', authManager, async (req, res) => {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
       .input('rId', rId)
-      .query('SELECT * FROM Product WHERE rId = @rId')
+      .query('SELECT * FROM Product WHERE rId = @rId AND (pCount >= 0 OR pCount IS NULL)')
     res.render('manager', { data: result.recordset, rId: rId })
   } catch (err) {
     res.send('ERROR: ' + err)
@@ -589,12 +589,15 @@ app.get('/manager/product/delete/:pId', authManager, async (req, res) => {
   const rId = req.session.rId
 
   try {
+    if (!pId || !rId) throw new Error('Invalid product or restaurant')
+
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
       .input('pId', sql.Char, pId)
-      .query(`UPDATE Product SET pCount = -2 WHERE pId = @pId AND rId = '${rId}'`)
-      // .query('DELETE Product WHERE pId = @pId')
+      .input('rId', sql.Char, rId)
+      .query(`UPDATE Product SET pCount = -2 WHERE pId = @pId AND rId = @rId`)
 
+      
     if (result.rowsAffected[0] > 0) {
       res.redirect('/manager')
       return

@@ -48,8 +48,8 @@
                 </p>
                 <div class="input-group">
                     <a href="/manager/product/edit/<%=item.pId%>" class="btn btn-sm btn-outline-secondary" id="button-addon2">編輯</a>
-                    <a href="/manager/product/delete/<%=item.pId%>" class="btn btn-sm btn-danger" id="button-addon2">刪除</a>
-                </div>
+                    <a href="#" onClick="onDeleteConfirm(event, '<%=item.pName%>', '<%=item.pId%>')" class="btn btn-sm btn-danger">刪除</a>
+                  </div>
               </div>
             </div>
           </div>
@@ -100,13 +100,22 @@
           </p>
           <div class="input-group">
             <a href="/manager/product/edit/${item.pId}" class="btn btn-sm btn-outline-secondary">編輯</a>
-            <a href="/manager/product/delete/${item.pId}" class="btn btn-sm btn-danger">刪除</a>
+            <a href="#" onClick="onDeleteConfirm(event, '${item.pName}', '${item.pId}')" class="btn btn-sm btn-danger">刪除</a>
           </div>
         </div>
       </div>
     </div>
     `
   }
+
+  const onDeleteConfirm = (e, pName, pid) => {
+    e.preventDefault()
+    const isConfirm = confirm(`確定刪除${pName}嗎？`)
+    if (!isConfirm) return
+    window.location.href = `/manager/product/delete/${pid}`
+  }
+
+
 </script>
 
 </html>
