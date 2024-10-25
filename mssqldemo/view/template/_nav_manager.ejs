@@ -24,6 +24,7 @@
         </div>
     </div>
     <script>
+        const rId = "<%= rId %>"
         const action = ''
         const options = {
             credentials: "include"
@@ -38,8 +39,8 @@
 
         const search = async () => {
             let searchText = searchInput.value
-            searchText = (searchText.length > 0) ? `/${searchText}` : ''
-            const url = `/api/${action}${searchText}`
+            searchText = (searchText.length > 0) ? `${searchText}` : ''
+            const url = `/api/product/${rId}/${searchText}`
             console.log(url)
             const res = await fetch(url)
             const json = await res.json()

@@ -87,15 +87,20 @@
 
   const renderCard = (item) => {
     return `
-    <div class="grid-item col-12 col-offset-12 col-sm-6 col-sm-offset-6 col-md-4 col-md-offset-4 col-lg-3 col-lg-offset-3">
+    <div
+      class="grid-item col-12 col-offset-12 col-sm-6 col-sm-offset-6 col-md-4 col-md-offset-4 col-lg-3 col-lg-offset-3">
       <div class="card">
         <img src="/public/assets/placeholder.jpg" class="card-img-top">
         <div class="card-body">
-          <h5 class="card-title">${item.pName}</h5>
-          <p class="card-text"><b>$${item.unitPrice}</b></p>
+          <h5 class="card-title">
+            ${item.pName}
+          </h5>
+          <p class="card-text">
+            <b>${item.unitPrice}</b>
+          </p>
           <div class="input-group">
-            <input id="count-${item.pId}" type="number" min="1" class="form-control" placeholder="購買數量" aria-label="Recipient's username" aria-describedby="button-addon2">
-            <button onclick="addToCart(this, '${item.pId}')" class="btn btn-sm btn-outline-secondary" type="button" id="button-addon2">加入</button>
+            <a href="/manager/product/edit/${item.pId}" class="btn btn-sm btn-outline-secondary">編輯</a>
+            <a href="/manager/product/delete/${item.pId}" class="btn btn-sm btn-danger">刪除</a>
           </div>
         </div>
       </div>
