@@ -245,7 +245,7 @@ app.get('/product/:rId', auth, async (req, res) => {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
       .input('rId', rId)
-      .query('SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)')
+      .query('SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0) AND isDelete = 0')
     res.render('product', { data: result.recordset, rId: rId })
   } catch (err) {
     res.send('ERROR: ' + err)
@@ -383,9 +383,9 @@ app.get('/api/product/:rId/:q?', authAPI, async (req, res) => {
     request.input('rId', req.params.rId)
     if (req.params.q) {
       request.input('q', req.params.q)
-      query = "SELECT * FROM Product WHERE rId = @rId AND pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)"
+      query = "SELECT * FROM Product WHERE rId = @rId AND pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0) AND isDelete = 0"
     } else {
-      query = "SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)"
+      query = "SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0) AND isDelete = 0"
     }
 
     const result = await request.query(query)
@@ -434,8 +434,13 @@ app.get('/api/cart/add/:pId/:count', authAPI, async (req, res) => {
 
     const c = await pool.request()
       .input('pId', sql.Char, pId)
-      .query('SELECT unitPrice, rId FROM Product WHERE pId = @pId')
+      .query('SELECT unitPrice, rId FROM Product WHERE pId = @pId AND isDelete = 0')
     
+    if (c.recordset.length == 0) {
+      res.json({error: "商品不存在"})
+      return
+    }
+
     const product = c.recordset[0]
     const unitPrice = product.unitPrice
     const price = count * unitPrice
@@ -499,7 +504,7 @@ app.get('/manager', authManager, async (req, res) => {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
       .input('rId', rId)
-      .query('SELECT * FROM Product WHERE rId = @rId AND (pCount >= 0 OR pCount IS NULL)')
+      .query('SELECT * FROM Product WHERE rId = @rId AND (pCount >= 0 OR pCount IS NULL) AND isDelete = 0')
     res.render('manager', { data: result.recordset, rId: rId })
   } catch (err) {
     res.send('ERROR: ' + err)
@@ -549,7 +554,7 @@ app.get('/manager/product/edit/:pId', authManager, async (req, res) => {
     const pId = req.params.pId
     const result = await pool.request()
       .input('pId', sql.Char, pId)
-      .query('SELECT * FROM Product WHERE pId=@pId')
+      .query('SELECT * FROM Product WHERE pId=@pId AND isDelete = 0')
 
     res.render('manager/product/edit', { data: result.recordset[0] })
 
@@ -595,8 +600,7 @@ app.get('/manager/product/delete/:pId', authManager, async (req, res) => {
     const result = await pool.request()
       .input('pId', sql.Char, pId)
       .input('rId', sql.Char, rId)
-      .query(`UPDATE Product SET pCount = -2 WHERE pId = @pId AND rId = @rId`)
-
+      .query(`UPDATE Product SET isDelete = 1 WHERE pId = @pId AND rId = @rId`)
       
     if (result.rowsAffected[0] > 0) {
       res.redirect('/manager')
