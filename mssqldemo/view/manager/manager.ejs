@@ -11,43 +11,78 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
 </head>
 
+<%
+var getStatusName = function(status) {
+  const mapping = {
+    'Pending': '待處理',
+    'Confirmed': '已確認',
+    'Completed': '已完成',
+    'Cancelled': '已取消',
+    'Preparing': '準備中'
+  };
+
+  return mapping[status];
+}
+%>
+
+
 <body>
   <%-include('../template/_nav_manager', {action: 'restaurant' })%>
   <div class="container">
     <div class="row mt-4">
-      <table class="table">
+      <table class="table table-hover table-bordered">
         <thead>
           <tr>
-            <th>訂單編號</th>
+            <th width="15%" class="text-center">訂單編號</th>
             <th>訂購人Email</th>
             <th>訂購人姓名</th>
-            <th>訂購日期</th>
-            <th></th>
-            <th></th>
+            <th class="text-center">訂購日期</th>
+            <th class="text-center">訂單狀態</th>
+            <th width="20%"></th>
           </tr>
         </thead>
         <!-- data area -->
         <tbody id="restaurant-data-area">
           <% for (const item of data) { %>
             <tr>
-              <td>
-                <%=item.oId.slice(0, 8)%>-***
+              <td class="text-center">
+                <%= item.oId.slice(0, 8) %> -***
               </td>
               <td>
-                <%=item.mEmail%>
+                <%= item.mEmail %>
               </td>
               <td>
-                <%=item.mName%>
+                <%= item.mName %>
               </td>
-              <td>
-                <%=item.oDate%>
+              <td class="text-center">
+                <%= item.oDate %>
               </td>
-              <td>
-                <button onclick="showOrderDetail('<%=item.oId%>')"
-                  class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#order-detail">詳細資料</button>
-                <% if (!done) { %>
-                  <button onclick="orderDone('<%=item.oId%>')" class="btn btn-sm btn-outline-success">完成訂單</button>
-                <% } %>
+              <td class="text-center">
+                <%= getStatusName(item.status) %>
+              </td>
+              <td class="text-center">
+                <button 
+                  onclick="showOrderDetail('<%=item.oId%>')"
+                  class="btn btn-sm btn-outline-secondary" 
+                  data-bs-toggle="modal" 
+                  data-bs-target="#order-detail"
+                >
+                  詳細資料
+                </button>
+                <button 
+                  onclick="orderDone('<%=item.oId%>')" 
+                  class="btn btn-sm btn-outline-success"
+                  <%= item.status === "Completed" ? "disabled" : "" %>
+                >
+                  完成訂單
+                </button>
+                <button 
+                  onclick="orderCancel('<%=item.oId%>')" 
+                  class="btn btn-sm btn-outline-danger"
+                  <%= item.status === "Cancelled" ? "disabled" : "" %>
+                >
+                  取消訂單
+                </button>
               </td>
             </tr>
             <% } %>
@@ -128,6 +163,21 @@
       } else {
         alert('操作失敗，請再試一次。')
       }
+    }
+
+    const orderCancel = async (oId) => {
+      // const url = `/api/manager/order/done/${oId}`
+      // const res = await fetch(url)
+      // const json = await res.json()
+
+      // console.log(json)
+      
+      // if (json.result === 'ok') {
+      //   alert('完成訂單！')
+      //   window.location.reload()
+      // } else {
+      //   alert('操作失敗，請再試一次。')
+      // }
     }
   </script>
 </body>

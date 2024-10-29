@@ -7,10 +7,10 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="/manager/order">所有訂單</a>
+                <li class="nav-item" data-tab="orders">
+                    <a class="nav-link" aria-current="page" href="/manager/order">所有訂單</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" data-tab="products">
                     <a class="nav-link" aria-current="page" href="/manager">所有商品</a>
                 </li>
                 <li class="nav-item">
@@ -29,6 +29,12 @@
     <script>
         const rId = "<%= rId %>"
         const action = ''
+
+        const tabUrlMapping = {
+            'orders': '/manager/order',
+            'products': '/manager',
+        }
+
         const options = {
             credentials: "include"
         }
@@ -39,6 +45,14 @@
             }
         })
         var total = 0
+
+        document.querySelectorAll(".navbar-nav > .nav-item").forEach(e => {
+            const tab = e.getAttribute('data-tab')
+            if (window.location.pathname === tabUrlMapping[tab]) {
+                e.children[0].classList.add('active')
+            }
+        })
+
 
         const search = async () => {
             let searchText = searchInput.value
