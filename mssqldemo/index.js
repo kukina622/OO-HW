@@ -5,6 +5,7 @@ import session from 'express-session'
 import { randomUUID } from 'crypto'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
+import fileUpload from 'express-fileupload';
 
 import region from './public/assets/region.json' assert { type: 'json' }
 
@@ -17,7 +18,9 @@ app.use(session({
   saveUninitialized: false,
   resave: true,
 }))
+app.use(fileUpload());
 app.use('/public', express.static(__dirname + '/public'))
+app.use('/upload', express.static(__dirname + '/upload'))
 
 // view engine setup
 // app.engine('ejs', ejs.__express);
@@ -549,16 +552,32 @@ app.post('/manager/product/add', authManager, async (req, res) => {
   const body = req.body
   console.log(body)
   const count = (body.count == '') ? null : body.count
+  const pId = randomUUID();
+
+  const image = req.files.image;
+  let filename = null;
+
+  if (image) {
+    const ext = image.name.split('.').pop();
+    filename = `${pId}.${ext}`;
+    const uploadPath = `${__dirname}/upload/${filename}`;  
+    image.mv(uploadPath, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+  }
 
   try {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
-      .input('pId', sql.Char, randomUUID())
+      .input('pId', sql.Char, pId)
       .input('count', sql.Int, count)
       .input('unitPrice', sql.VarChar, body.unitPrice)
       .input('name', sql.NVarChar, body.name)
       .input('rId', sql.Char, rId)
-      .query('INSERT INTO Product(pId, pCount, unitPrice, pName, rId) ' + 'VALUES(@pId, @count, @unitPrice, @name, @rId)')
+      .input('image', sql.Text, filename)
+      .query('INSERT INTO Product(pId, pCount, unitPrice, pName, rId, image) ' + 'VALUES(@pId, @count, @unitPrice, @name, @rId, @image)')
     if (result.rowsAffected[0] > 0) {
       // insert ok
       res.redirect('/manager')
@@ -591,6 +610,21 @@ app.post('/manager/product/edit', authManager, async (req, res) => {
   const body = req.body
   const rId = req.session.rId
   const count = (body.count == '') ? null : body.count
+
+  const image = req?.files?.image;
+  let filename = req.body.prevImage;
+
+  if (image) {
+    const ext = image.name.split('.').pop();
+    filename = `${body.pId}.${ext}`;
+    const uploadPath = `${__dirname}/upload/${filename}`;  
+    image.mv(uploadPath, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+  }
+
   try {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
@@ -599,7 +633,8 @@ app.post('/manager/product/edit', authManager, async (req, res) => {
       .input('unitPrice', sql.VarChar, body.unitPrice)
       .input('name', sql.NVarChar, body.name)
       .input('rId', sql.Char, req.session.rId)
-      .query('UPDATE Product SET pCount=@count, unitPrice=@unitPrice, pName=@name WHERE pId=@pId AND rId=@rId')
+      .input('image', sql.Text, filename)
+      .query('UPDATE Product SET pCount=@count, unitPrice=@unitPrice, pName=@name, image=@image WHERE pId=@pId AND rId=@rId')
 
     if (result.rowsAffected[0] > 0) {
       res.redirect('/manager')
