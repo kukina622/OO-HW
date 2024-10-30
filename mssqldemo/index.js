@@ -638,6 +638,67 @@ app.get('/manager/product/delete/:pId', authManager, async (req, res) => {
   }
 })
 
+app.get("/api/manager/order/detail/:oId", authManager, async (req, res) => {
+  const oId = req.params.oId
+
+  try {
+    const pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('oId', oId)
+      .query(`
+        SELECT 
+          [Order].oId,
+          Cart.cTime,
+          Product.pName,
+          Cart.unitPrice,
+          Cart.count,
+          Cart.price
+        FROM [Order]
+        INNER JOIN Cart ON [Order].oId = Cart.oId
+        INNER JOIN Product ON Cart.pId = Product.pId
+        WHERE [Order].oId = @oId 
+      `)
+    res.json(result.recordset)
+
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
+app.get("/api/manager/order/complete/:oId", authManager, async (req, res) => {
+  const oId = req.params.oId
+  try {
+    const pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('oId', oId)
+      .query(`UPDATE [Order] SET status = 'Completed' WHERE oId = @oId`)
+    
+    res.json({
+      result: result.rowsAffected[0] > 0 ? 'ok' : 'error'
+    })
+
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
+app.get("/api/manager/order/cancel/:oId", authManager, async (req, res) => {
+  const oId = req.params.oId
+  try {
+    const pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('oId', oId)
+      .query(`UPDATE [Order] SET status = 'Cancelled' WHERE oId = @oId`)
+    
+    res.json({
+      result: result.rowsAffected[0] > 0 ? 'ok' : 'error'
+    })
+
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
 // Mark Start
 /* 0601 test */
 app.get('/dbData', async (req, res) => {
