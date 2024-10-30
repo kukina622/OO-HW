@@ -612,7 +612,7 @@ app.post('/manager/product/edit', authManager, async (req, res) => {
   const count = (body.count == '') ? null : body.count
 
   const image = req?.files?.image;
-  let filename = req.body.prevImage;
+  let filename = req.body.prevImage || null;
 
   if (image) {
     const ext = image.name.split('.').pop();
