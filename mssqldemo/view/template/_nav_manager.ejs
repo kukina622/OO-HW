@@ -7,24 +7,34 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="/manager">Manager</a>
+                <li class="nav-item" data-tab="orders">
+                    <a class="nav-link" aria-current="page" href="/manager/order">所有訂單</a>
+                </li>
+                <li class="nav-item" data-tab="products">
+                    <a class="nav-link" aria-current="page" href="/manager">所有商品</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/manager/product/add">新增</a>
+                    <a class="nav-link" href="/manager/product/add">新增商品</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-danger" href="/logout">Logout</a>
+                    <a class="nav-link text-danger" href="/logout">登出</a>
                 </li>
             </ul>
             <div class="d-flex">
-                <input id="search" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" onclick="search()">Search</button>
+                <input id="search" class="form-control me-2" type="search" placeholder="商品名" aria-label="Search">
+                <button class="btn btn-outline-success text-nowrap" onclick="search()">搜尋</button>
             </div>
         </div>
     </div>
     <script>
+        const rId = "<%= rId %>"
         const action = ''
+
+        const tabUrlMapping = {
+            'orders': '/manager/order',
+            'products': '/manager',
+        }
+
         const options = {
             credentials: "include"
         }
@@ -36,10 +46,18 @@
         })
         var total = 0
 
+        document.querySelectorAll(".navbar-nav > .nav-item").forEach(e => {
+            const tab = e.getAttribute('data-tab')
+            if (window.location.pathname === tabUrlMapping[tab]) {
+                e.children[0].classList.add('active')
+            }
+        })
+
+
         const search = async () => {
             let searchText = searchInput.value
-            searchText = (searchText.length > 0) ? `/${searchText}` : ''
-            const url = `/api/${action}${searchText}`
+            searchText = (searchText.length > 0) ? `${searchText}` : ''
+            const url = `/api/product/${rId}/${searchText}`
             console.log(url)
             const res = await fetch(url)
             const json = await res.json()

@@ -28,9 +28,9 @@
 </head>
 
 <body>
+  <%- include('../template/_nav_manager', {action: 'manager/product'}) %>
   <div class="container">
 
-    <%- include('../template/_nav_manager', {action: 'manager/product'}) %>
     <br class="my-5">
 
       <div id="data-area" class="row grid" data-masonry='{ "percentPosition": true, "itemSelector": ".grid-item" }'>

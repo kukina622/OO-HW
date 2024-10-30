@@ -5,6 +5,7 @@ import session from 'express-session'
 import { randomUUID } from 'crypto'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
+import fileUpload from 'express-fileupload';
 
 import region from './public/assets/region.json' assert { type: 'json' }
 
@@ -17,7 +18,9 @@ app.use(session({
   saveUninitialized: false,
   resave: true,
 }))
+app.use(fileUpload());
 app.use('/public', express.static(__dirname + '/public'))
+app.use('/upload', express.static(__dirname + '/upload'))
 
 // view engine setup
 // app.engine('ejs', ejs.__express);
@@ -434,8 +437,13 @@ app.get('/api/cart/add/:pId/:count', authAPI, async (req, res) => {
 
     const c = await pool.request()
       .input('pId', sql.Char, pId)
-      .query('SELECT unitPrice, rId FROM Product WHERE pId = @pId')
+      .query('SELECT unitPrice, rId FROM Product WHERE pId = @pId AND pCount >= 0')
     
+    if (c.recordset.length == 0) {
+      res.json({error: "商品不存在"})
+      return
+    }
+
     const product = c.recordset[0]
     const unitPrice = product.unitPrice
     const price = count * unitPrice
@@ -499,8 +507,32 @@ app.get('/manager', authManager, async (req, res) => {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
       .input('rId', rId)
-      .query('SELECT * FROM Product WHERE rId = @rId')
+      .query('SELECT * FROM Product WHERE rId = @rId AND (pCount >= 0 OR pCount IS NULL)')
     res.render('manager', { data: result.recordset, rId: rId })
+  } catch (err) {
+    res.send('ERROR: ' + err)
+  }
+})
+
+app.get("/manager/order", authManager, async (req, res) => {
+  const rId = req.session.rId
+
+  try {
+    const pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('rId', sql.Char, rId)
+      .query(`
+        SELECT * FROM [Order]
+        INNER JOIN Member ON [Order].mId = Member.mEmail
+        WHERE [Order].rId = @rId
+        `
+      )
+    const data = result.recordset.map(x => ({
+      ...x,
+      oDate: x.oDate.toISOString().split('T')[0]
+    }))
+
+    res.render('manager/manager', { data, rId })
   } catch (err) {
     res.send('ERROR: ' + err)
   }
@@ -520,16 +552,32 @@ app.post('/manager/product/add', authManager, async (req, res) => {
   const body = req.body
   console.log(body)
   const count = (body.count == '') ? null : body.count
+  const pId = randomUUID();
+
+  const image = req.files.image;
+  let filename = null;
+
+  if (image) {
+    const ext = image.name.split('.').pop();
+    filename = `${pId}.${ext}`;
+    const uploadPath = `${__dirname}/upload/${filename}`;  
+    image.mv(uploadPath, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+  }
 
   try {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
-      .input('pId', sql.Char, randomUUID())
+      .input('pId', sql.Char, pId)
       .input('count', sql.Int, count)
       .input('unitPrice', sql.VarChar, body.unitPrice)
       .input('name', sql.NVarChar, body.name)
       .input('rId', sql.Char, rId)
-      .query('INSERT INTO Product(pId, pCount, unitPrice, pName, rId) ' + 'VALUES(@pId, @count, @unitPrice, @name, @rId)')
+      .input('image', sql.Text, filename)
+      .query('INSERT INTO Product(pId, pCount, unitPrice, pName, rId, image) ' + 'VALUES(@pId, @count, @unitPrice, @name, @rId, @image)')
     if (result.rowsAffected[0] > 0) {
       // insert ok
       res.redirect('/manager')
@@ -549,7 +597,7 @@ app.get('/manager/product/edit/:pId', authManager, async (req, res) => {
     const pId = req.params.pId
     const result = await pool.request()
       .input('pId', sql.Char, pId)
-      .query('SELECT * FROM Product WHERE pId=@pId')
+      .query('SELECT * FROM Product WHERE pId=@pId AND pCount >= 0')
 
     res.render('manager/product/edit', { data: result.recordset[0] })
 
@@ -562,6 +610,21 @@ app.post('/manager/product/edit', authManager, async (req, res) => {
   const body = req.body
   const rId = req.session.rId
   const count = (body.count == '') ? null : body.count
+
+  const image = req?.files?.image;
+  let filename = req.body.prevImage;
+
+  if (image) {
+    const ext = image.name.split('.').pop();
+    filename = `${body.pId}.${ext}`;
+    const uploadPath = `${__dirname}/upload/${filename}`;  
+    image.mv(uploadPath, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+  }
+
   try {
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
@@ -570,7 +633,8 @@ app.post('/manager/product/edit', authManager, async (req, res) => {
       .input('unitPrice', sql.VarChar, body.unitPrice)
       .input('name', sql.NVarChar, body.name)
       .input('rId', sql.Char, req.session.rId)
-      .query('UPDATE Product SET pCount=@count, unitPrice=@unitPrice, pName=@name WHERE pId=@pId AND rId=@rId')
+      .input('image', sql.Text, filename)
+      .query('UPDATE Product SET pCount=@count, unitPrice=@unitPrice, pName=@name, image=@image WHERE pId=@pId AND rId=@rId')
 
     if (result.rowsAffected[0] > 0) {
       res.redirect('/manager')
@@ -589,12 +653,14 @@ app.get('/manager/product/delete/:pId', authManager, async (req, res) => {
   const rId = req.session.rId
 
   try {
+    if (!pId || !rId) throw new Error('Invalid product or restaurant')
+
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
       .input('pId', sql.Char, pId)
-      .query(`UPDATE Product SET pCount = -2 WHERE pId = @pId AND rId = '${rId}'`)
-      // .query('DELETE Product WHERE pId = @pId')
-
+      .input('rId', sql.Char, rId)
+      .query(`UPDATE Product SET pCount = -2 WHERE pId = @pId AND rId = @rId`)
+      
     if (result.rowsAffected[0] > 0) {
       res.redirect('/manager')
       return
@@ -604,6 +670,67 @@ app.get('/manager/product/delete/:pId', authManager, async (req, res) => {
     }
   } catch (err) {
     res.send('Error' + err)
+  }
+})
+
+app.get("/api/manager/order/detail/:oId", authManager, async (req, res) => {
+  const oId = req.params.oId
+
+  try {
+    const pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('oId', oId)
+      .query(`
+        SELECT 
+          [Order].oId,
+          Cart.cTime,
+          Product.pName,
+          Cart.unitPrice,
+          Cart.count,
+          Cart.price
+        FROM [Order]
+        INNER JOIN Cart ON [Order].oId = Cart.oId
+        INNER JOIN Product ON Cart.pId = Product.pId
+        WHERE [Order].oId = @oId 
+      `)
+    res.json(result.recordset)
+
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
+app.get("/api/manager/order/complete/:oId", authManager, async (req, res) => {
+  const oId = req.params.oId
+  try {
+    const pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('oId', oId)
+      .query(`UPDATE [Order] SET status = 'Completed' WHERE oId = @oId`)
+    
+    res.json({
+      result: result.rowsAffected[0] > 0 ? 'ok' : 'error'
+    })
+
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
+app.get("/api/manager/order/cancel/:oId", authManager, async (req, res) => {
+  const oId = req.params.oId
+  try {
+    const pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('oId', oId)
+      .query(`UPDATE [Order] SET status = 'Cancelled' WHERE oId = @oId`)
+    
+    res.json({
+      result: result.rowsAffected[0] > 0 ? 'ok' : 'error'
+    })
+
+  } catch (err) {
+    res.json({ error: err })
   }
 })
 
