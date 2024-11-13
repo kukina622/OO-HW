@@ -39,14 +39,14 @@
         <label for="birthday">生日</label>
         <input value="<%=data.birthday%>" type="date" class="form-control" name="birthday" id="birthday" placeholder="請輸入生日">
       </div>
-      <div class="form-group mb-3">
+      <!-- <div class="form-group mb-3">
         <label for="region">區域</label>
         <select class="form-select" name="region" id="region">
           <% for (const reg of region) { %>
             <option <%= (data.mRegion === reg) ? 'selected' : '' %> value="<%=reg%>"><%=reg%></option>
           <% } %>
         </select>
-      </div>
+      </div> -->
       <button type="submit" class="btn btn-primary mt-3">送出</button>
     </form>
   </div>

@@ -34,7 +34,7 @@
     <hr style="margin-top: 20px; margin-bottom: 20px;">
     <!-- cart data -->
     <div class="container">
-      <% for (const item of cart) {%>
+      <% for (const item of data) {%>
         <div class="row mt-2" style="background-color: #F0F0F0;">
           <div class="col-md-2">
             <img src="/public/assets/placeholder.jpg" alt="圖片無法顯示" width="75%" style="margin: 12px 0 12px 0;">
@@ -57,7 +57,7 @@
       <h4 align="right">NT$ <%=total%></h4>
       <br>
       <h4 align="center"><a href="/member" class="btn btn-outline-primary">查看歷史訂單</a>
-        <a href="/" class="btn btn-outline-success">繼續選購</a></h4>
+        <a href="/product" class="btn btn-outline-success">繼續選購</a></h4>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"

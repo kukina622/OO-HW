@@ -8,3 +8,6 @@ ALTER TABLE [Order]
 ADD CONSTRAINT [status_check] CHECK([status] IN('Pending','Confirmed','Completed','Cancelled', 'Preparing'))
 
 ALTER TABLE [Product] ADD image text; 
+
+ALTER TABLE Member ADD mAddress VARCHAR(50);
+ALTER TABLE Member DROP COLUMN mRegion;
