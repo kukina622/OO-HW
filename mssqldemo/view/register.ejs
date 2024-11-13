@@ -24,7 +24,7 @@
     <div class="py-5 text-center">
       <h2>Register</h2>
     </div>
-    <form method="post" class="needs-validation">
+    <form id="form" action="/submit" method="post" class="needs-validation">
       <!-- <div class="form-group mb-3">
         <label for="email">Email address</label>
         <input value="<%= data.email %>"  type="email" class="form-control<%= (invaild.email) ? ' is-invalid' : '' %>" id="email"  aria-describedby="emailHelp"
@@ -33,39 +33,38 @@
           Account already existed.
         </div>
       </div> -->
-      <div class="input-group mb-3">
+      <div class="input-group mb-3 position-relative">
         <input id="email" name="email" type="email" value="<%= data.email %>" class="form-control" placeholder="Recipient's username" aria-label="Recipient's username" aria-describedby="button-addon2">
         <button class="btn btn-outline-secondary" type="button" id="button-addon2" onclick="checkUsernameIsVaild()">Check</button>
         <div class="invalid-feedback">
           Account already existed.
         </div>
       </div>
-      <div class="form-group mb-3">
+      <div class="form-group mb-3 position-relative">
         <label for="password1">Password</label>
         <input value="<%= data.password %>" type="password" class="form-control" name="password" id="password1" placeholder="Password">
       </div>
-      <div class="form-group mb-3">
+      <div class="form-group mb-3 position-relative">
         <label for="password2">Re-enter Password</label>
         <input value="<%= data.password %>" type="password" class="form-control" id="password2" placeholder="Password">
         <div class="invalid-feedback">
           Password unmatch.
         </div>
       </div>
-      <div class="form-group mb-3">
+      <div class="form-group mb-3 position-relative">
         <label for="name">Name</label>
         <input value="<%= data.name %>" type="text" class="form-control" name="name" id="name" placeholder="Name">
       </div>
-      <div class="form-group mb-3">
+      <div class="form-group mb-3 position-relative">
         <label for="birthday">Birthday</label>
         <input value="<%= data.birthday %>" type="date" class="form-control" name="birthday" id="birthday" placeholder="Birthday">
       </div>
-      <div class="form-group mb-3">
-        <label for="region">Region</label>
-        <select class="form-select" name="region" id="region">
-          <% for (const reg of region) { %>
-            <option <%= (data.region === reg) ? 'selected' : '' %> value="<%=reg%>"><%=reg%></option>
-          <% } %>
-        </select>
+      <div class="form-group mb-3 position-relative">
+        <label for="address">Address</label>
+        <input value="<%= data.address %>" type="address" class="form-control" id="address" placeholder="Address">
+        <div class="invalid-feedback">
+          Please provide a vaild address.
+        </div>
       </div>
       <button type="submit" class="btn btn-primary mt-3">Submit</button>
     </form>
@@ -82,8 +81,30 @@
         } else {
           passwordConfirm.className = 'form-control is-valid'
         }
-      })
-      
+      });
+
+      //address欄位的判斷
+        const addressInput = document.getElementById('address');
+        const form = document.getElementById('form');
+        // 即時檢查
+        addressInput.addEventListener('keyup', (e) => {
+          if (addressInput.value.trim() === "") {
+            addressInput.className = 'form-control is-invalid';
+            //e.preventDefault(); // 阻止提交
+          } else {
+            addressInput.className = 'form-control is-valid';
+          }
+        });
+        // 提交時檢查
+        form.addEventListener('submit', (e) => {
+          if (addressInput.value.trim() === "") {
+            addressInput.className = 'form-control is-invalid';
+            e.preventDefault(); // 阻止提交
+          } else {
+            addressInput.className = 'form-control is-valid';
+          }
+        });
+
       const options = {
         credentials: "include"
       }

@@ -33,9 +33,9 @@ const DEBUG = false
 
 const sqlConfig = {
   user: 'sa',
-  password: '',
-  database: '',
-  server: '',
+  password: 'bdi89uwe31gdi121uy@7!#!@',
+  database: 'project',
+  server: 'localhost',
   pool: {
     max: 10,
     min: 0,
@@ -103,7 +103,7 @@ app.use((req, res, next) => {
 
 app.get('/login', async (req, res) => {
   if (req.session.user) {
-    res.redirect('/restaurant')
+    res.redirect('/product')
     return
   }
   if (req.session.rId) {
@@ -129,8 +129,8 @@ app.post('/login', async (req, res) => {
     console.log(result.recordset)
     if (result.recordset.length > 0) {
       req.session.user = username
-      req.session.region = result.recordset[0].mRegion
-      res.redirect('/')
+      //req.session.region = result.recordset[0].mRegion
+      res.redirect('/product')
       return
     } else {
 
@@ -160,7 +160,7 @@ app.get('/logout', auth, (req, res) => {
   })
 })
 app.get('/register', async (req, res) => {
-  res.render('register', { region: region, data: {}, invaild: {} })
+  res.render('register', { data: {}, invaild: {} }) //拿掉region: region,
 })
 app.post('/register', async (req, res) => {
   try {
@@ -187,10 +187,11 @@ app.post('/register', async (req, res) => {
       .input('mEmail', sql.VarChar, body.email)
       .input('mPassword', sql.VarChar, body.password)
       .input('birthday', sql.Date, birthday)
-      .input('mRegion', sql.NVarChar, body.region)
+      //.input('mRegion', sql.NVarChar, body.region)
       .input('mName', sql.NVarChar, body.name)
-      .query('INSERT INTO Member(mEmail, mPassword, birthday, mRegion, mName)' +
-        ' VALUES(@mEmail, @mPassword, @birthday, @mRegion, @mName);')
+      .input('mAddress', sql.VarChar, body.address) //加住址
+      .query('INSERT INTO Member(mEmail, mPassword, birthday, mName, mAddress)' +
+        ' VALUES(@mEmail, @mPassword, @birthday, @mName, @mAddress);')
 
     console.log("result: ", newMember)
 
@@ -199,7 +200,7 @@ app.post('/register', async (req, res) => {
       req.session.user = body.email
       req.session.region = body.region
 
-      res.redirect('/')
+      res.redirect('/product')
       return
     } else {
       res.render('register', { region: region, data: body, invaild: {} })
@@ -241,15 +242,16 @@ app.get('/', auth, async (req, res) => {
   }
 })
 
+//product
+app.get('/product', auth, async (req, res) => {
+  const body = req.body
 
-app.get('/product/:rId', auth, async (req, res) => {
   try {
-    const { rId } = req.params
+    //const { rId } = req.params
     const pool = await sql.connect(sqlConfig)
     const result = await pool.request()
-      .input('rId', rId)
-      .query('SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)')
-    res.render('product', { data: result.recordset, rId: rId })
+      .query('SELECT * FROM Product WHERE pCount IS NULL OR pCount >= 0')
+    res.render('product', { data: result.recordset })
   } catch (err) {
     res.send('ERROR: ' + err)
   }
@@ -263,29 +265,25 @@ app.get('/checkout', async (req, res) => {
   try {
     const pool = await sql.connect(sqlConfig)
 
-    /*
-    CREATE TABLE [Order](
-    oId			CHAR(36)		NOT NULL,
-    oDate		DATE			NOT NULL,
-    estimateTime	DATETIME	NOT NULL,
-    total		INT				NOT NULL,
-    mId			VARCHAR(20)		NOT NULL,
-    rId 		CHAR(36)		NOT NULL,
-
-    PRIMARY KEY (oId),
-    FOREIGN KEY (mId) REFERENCES Member(mEmail),
-    FOREIGN KEY (rid) REFERENCES Restaurant(rId)
-    );
-    */
-
     const cart = await pool.request()
       .input('mId', sql.VarChar, mId)
-      .query("SELECT price, pId FROM Cart WHERE mId = @mId AND oId IS NULL")
+      .query("SELECT c.price, c.unitPrice, c.count, c.pId, p.pName FROM Cart c, Product p WHERE c.mId = @mId AND c.pId = p.pId AND c.oId IS NULL")
     
-    // no product inside cart
+    //// no product inside cart
+    // if (cart.recordset.length == 0) {
+    //   res.render('error', { message: "Your cart is empty." });
+    //   return
+    // }
     if (cart.recordset.length == 0) {
-      res.render('error')
-      return
+      const pool = await sql.connect(sqlConfig)
+      const result = await pool.request()
+        .query('SELECT * FROM Product WHERE pCount IS NULL OR pCount >= 0')
+      res.render('product', { 
+          data: result.recordset,
+          message: "Your cart is empty.", 
+          errorType: "emptyCart" 
+      });
+      return;
     }
 
     let total = 0
@@ -313,8 +311,9 @@ app.get('/checkout', async (req, res) => {
       .query("UPDATE Cart SET oId = @oId WHERE mId = @mId AND oId IS NULL")
     
     if (cart_update.rowsAffected[0] > 0) {
-      res.send("RESULT: OK")
-      return
+      //res.send("RESULT: OK")
+      //return
+      res.render('checkout', { data: cart.recordset, oId: oId, total: total } )
     }
 
   } catch (err) {
@@ -348,12 +347,12 @@ app.get('/api/email_validation/:email', async (req, res) => {
   }
 })
 
-app.get('switch_region/:r', authAPI, async (req, res) => {
-  const region = req.params.r
-  req.session.region = region
+// app.get('switch_region/:r', authAPI, async (req, res) => {
+//   const region = req.params.r
+//   req.session.region = region
 
 
-})
+// })
 
 app.get('/api/restaurant/:q?', authAPI, async (req, res) => {
   const { q } = req.params
@@ -363,13 +362,13 @@ app.get('/api/restaurant/:q?', authAPI, async (req, res) => {
 
     let query = ''
     let request = pool.request()
-    request.input('region', req.session.region)
-    if (req.params.q) {
-      request.input('q', req.params.q)
-      query = "SELECT * FROM Restaurant WHERE rRegion = @region AND rName LIKE '%' +@q + '%'"
-    } else {
-      query = "SELECT * FROM Restaurant WHERE rRegion = @region"
-    }
+    // request.input('region', req.session.region)
+    // if (req.params.q) {
+    //   request.input('q', req.params.q)
+    //   query = "SELECT * FROM Restaurant WHERE rRegion = @region AND rName LIKE '%' +@q + '%'"
+    // } else {
+    //   query = "SELECT * FROM Restaurant WHERE rRegion = @region"
+    // }
 
     const result = await request.query(query)
     res.json(result.recordset)
@@ -377,18 +376,18 @@ app.get('/api/restaurant/:q?', authAPI, async (req, res) => {
     res.json({ error: err })
   }
 })
-app.get('/api/product/:rId/:q?', authAPI, async (req, res) => {
+app.get('/api/product/:q?', authAPI, async (req, res) => {
   try {
     const pool = await sql.connect(sqlConfig)
 
     let query = ''
     let request = pool.request()
-    request.input('rId', req.params.rId)
+    //request.input('rId', req.params.rId)
     if (req.params.q) {
       request.input('q', req.params.q)
-      query = "SELECT * FROM Product WHERE rId = @rId AND pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)"
+      query = "SELECT * FROM Product WHERE pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)"
     } else {
-      query = "SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)"
+      query = "SELECT * FROM Product WHERE pCount IS NULL OR pCount >= 0"
     }
 
     const result = await request.query(query)
@@ -437,7 +436,7 @@ app.get('/api/cart/add/:pId/:count', authAPI, async (req, res) => {
 
     const c = await pool.request()
       .input('pId', sql.Char, pId)
-      .query('SELECT unitPrice, rId FROM Product WHERE pId = @pId AND pCount >= 0')
+      .query('SELECT unitPrice, rId FROM Product WHERE pId = @pId AND (pCount >= 0 OR pCount IS NULL)') //pCount = NULL?
     
     if (c.recordset.length == 0) {
       res.json({error: "商品不存在"})
@@ -448,17 +447,17 @@ app.get('/api/cart/add/:pId/:count', authAPI, async (req, res) => {
     const unitPrice = product.unitPrice
     const price = count * unitPrice
 
-    // check products in cart is from the same restaurant
-    const check = await pool.request()
-      .input('rId', sql.Char, product.rId)
-      .query(`SELECT rId FROM Cart, Product WHERE Cart.mId = '${mId}' AND oId IS NULL AND Cart.pId = Product.pId`)
+    // // check products in cart is from the same restaurant
+    // const check = await pool.request()
+    //   .input('rId', sql.Char, product.rId)
+    //   .query(`SELECT rId FROM Cart, Product WHERE Cart.mId = '${mId}' AND oId IS NULL AND Cart.pId = Product.pId`)
 
-    console.log(check.recordset)
+    // console.log(check.recordset)
     
-    if (check.recordset.length > 0 && check.recordset[0].rId != product.rId) {
-      res.json({error: "購物車中有來自其他餐廳的商品，請先刪除。"})
-      return
-    }
+    // if (check.recordset.length > 0 && check.recordset[0].rId != product.rId) {
+    //   res.json({error: "購物車中有來自其他餐廳的商品，請先刪除。"})
+    //   return
+    // }
 
     //
     const result = await pool.request()
@@ -484,7 +483,8 @@ app.get('/api/cart/delete/:cTime', authAPI, async (req, res) => {
     const pool = await sql.connect(sqlConfig)
 
     const result = await pool.request()
-      .input('cTime', sql.VarChar, cTime)
+      .input('mId', sql.VarChar, mId)
+      .input('cTime', sql.DateTime, cTime)
       .query(`DELETE Cart WHERE mId = '${mId}' AND cTime = @cTime`)
 
     console.log(result)
