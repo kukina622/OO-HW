@@ -57,7 +57,7 @@
         const search = async () => {
             let searchText = searchInput.value
             searchText = (searchText.length > 0) ? `${searchText}` : ''
-            const url = `/api/product/${rId}/${searchText}`
+            const url = `/api/product/manager/${rId}?q=${searchText}`
             console.log(url)
             const res = await fetch(url)
             const json = await res.json()

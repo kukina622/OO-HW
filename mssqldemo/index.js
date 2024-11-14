@@ -395,6 +395,26 @@ app.get('/api/product/:q?', authAPI, async (req, res) => {
   }
 })
 
+app.get('/api/product/manager/:rId', authAPI, async (req, res) => {
+  try {
+    const pool = await sql.connect(sqlConfig)
+    let query = ''
+    let request = pool.request()
+    request.input('rId', req.params.rId)
+    if (req.query.q) {
+      request.input('q', req.query.q)
+      query = "SELECT * FROM Product WHERE rId = @rId AND pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)"
+    } else {
+      query = "SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)"
+    }
+
+    const result = await request.query(query)
+    res.json(result.recordset)
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
 
 app.get("/api/orders", authAPI, async (req, res) => {
   const mId = req.session.user
