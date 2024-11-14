@@ -11,8 +11,7 @@
           <a class="nav-link active" aria-current="page" href="/product">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">我的歷史訂單</a>
-          
+          <a class="nav-link" href="/history-order">我的歷史訂單</a>
         </li>
         <li class="nav-item">
           <a id="cartButton" href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#list">
@@ -27,7 +26,7 @@
           <a class="nav-link text-danger" href="/logout">Logout</a>
         </li>
       </ul>
-      <div class="d-flex">
+      <div class="d-flex" id="search-wrapper">
         <input id="search" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
         <button class="btn btn-outline-success" onclick="search()">Search</button>
       </div>

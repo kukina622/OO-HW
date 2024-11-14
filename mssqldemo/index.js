@@ -7,8 +7,8 @@ import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import fileUpload from 'express-fileupload';
 
-import region from './public/assets/region.json' assert { type: 'json' }
 
+const region = []
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
 app.use(express.json())
@@ -322,6 +322,11 @@ app.get('/checkout', async (req, res) => {
   }
 })
 
+// history order
+app.get('/history-order', auth, async (req, res) => {
+  res.render('member/history-order')
+})
+
 // API
 
 app.get('/api/email_validation/:email', async (req, res) => {
@@ -346,13 +351,6 @@ app.get('/api/email_validation/:email', async (req, res) => {
     res.send('ERROR: ' + err)
   }
 })
-
-// app.get('switch_region/:r', authAPI, async (req, res) => {
-//   const region = req.params.r
-//   req.session.region = region
-
-
-// })
 
 app.get('/api/restaurant/:q?', authAPI, async (req, res) => {
   const { q } = req.params
@@ -392,6 +390,61 @@ app.get('/api/product/:q?', authAPI, async (req, res) => {
 
     const result = await request.query(query)
     res.json(result.recordset)
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
+
+app.get("/api/orders", authAPI, async (req, res) => {
+  const mId = req.session.user
+  const { status } = req.query
+  try {
+    if (!mId) throw new Error('Invalid member id')
+
+    const pool = await sql.connect(sqlConfig)
+
+    let request = pool.request()
+      .input('mId', sql.VarChar, mId)
+
+    let query = `
+      SELECT 
+        [Order].*,
+        [Cart].count,
+        [Cart].unitPrice,
+        [Cart].price,
+        Product.pName,
+        Product.image
+      FROM [Order]
+      INNER JOIN Cart ON [Order].oId = [Cart].oId
+      LEFT JOIN Product ON [Cart].pId = Product.pId
+      WHERE [Order].mId = @mId
+    `
+
+    if (status !== "ALL" && status) {
+      request.input('status', sql.NVarChar, status)
+      query += ' AND [Order].status = @status'
+    }
+
+    const result = await request.query(query)
+    const orders = result.recordset
+      .map((x) => ({
+        ...x,
+        oDate: x.oDate.toISOString().split("T")[0]
+      }))
+      .reduce((acc, order) => {
+        const { oId, pName, count, unitPrice, price, image, ...rest } = order;
+
+        acc[oId] = acc[oId] || { ...rest, oId, items: [] };
+        acc[oId].items = [
+          ...acc[oId].items,
+          { pName, count, unitPrice, price, image }
+        ];
+
+        return acc;
+      }, {});
+
+    res.json(Object.values(orders))
   } catch (err) {
     res.json({ error: err })
   }
@@ -530,7 +583,9 @@ app.get("/manager/order", authManager, async (req, res) => {
     const data = result.recordset.map(x => ({
       ...x,
       oDate: x.oDate.toISOString().split('T')[0]
-    }))
+    })).reduce((acc, x) => {
+
+    }, [])
 
     res.render('manager/manager', { data, rId })
   } catch (err) {
