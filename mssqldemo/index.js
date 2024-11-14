@@ -583,9 +583,7 @@ app.get("/manager/order", authManager, async (req, res) => {
     const data = result.recordset.map(x => ({
       ...x,
       oDate: x.oDate.toISOString().split('T')[0]
-    })).reduce((acc, x) => {
-
-    }, [])
+    }))
 
     res.render('manager/manager', { data, rId })
   } catch (err) {
