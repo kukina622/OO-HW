@@ -219,6 +219,39 @@ app.get('/member', auth, async (req, res) => {
   res.render('member/member')
 })
 
+app.get('/member/edit', auth, async (req, res) => {
+  const email = req.session.user
+  try {
+    let pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('email', sql.VarChar, email)
+      .query(`
+        SELECT 
+          [birthday], 
+          [mName], 
+          [mAddress], 
+          [mEmail] 
+        FROM Member 
+        WHERE mEmail = @email`
+      )
+
+    if (result.recordset.length === 0) {
+      throw new Error('Member not found')
+    }
+    const member = result.recordset[0];
+
+    res.render('member/edit', {
+      data: {
+        ...member,
+        birthday: member?.birthday?.toISOString().split('T')[0]
+      }
+    })
+
+  } catch (err) {
+    res.send('ERROR: ' + err)
+  }
+})
+
 // restaurant
 app.get('/', auth, async (req, res) => {
   const body = req.body
@@ -571,6 +604,62 @@ app.get('/api/cart/delete/:cTime', authAPI, async (req, res) => {
     res.json({ error: err })
   }
 })
+
+// edit member profile
+
+app.post('/api/member/edit', auth, async (req, res) => {
+  const mId = req.session.user
+  const { name, address, birthday } = req.body
+  try {
+    const pool = await sql.connect(sqlConfig)
+
+    const result = await pool.request()
+      .input('mId', sql.VarChar, mId)
+      .input('birthday', sql.Date, birthday)
+      .input('mAddress', sql.VarChar, address)
+      .input('mName', sql.VarChar, name)
+      .query(`UPDATE Member SET mName = @mName, mAddress = @mAddress, birthday = @birthday WHERE mEmail = @mId`)
+    
+    if (result.rowsAffected[0] > 0) {
+      res.json({ result: 'ok' })
+      return
+    }
+  } catch (error) {
+    res.status(400).json({ error: err })
+  }
+})
+
+app.post('/api/member/password/edit', auth, async (req, res) => {
+  const mId = req.session.user
+  const { password, newPassword } = req.body
+  try {
+    const pool = await sql.connect(sqlConfig)
+
+    const member = await pool.request()
+      .input('mId', sql.VarChar, mId)
+      .input('password', sql.VarChar, password)
+      .query('SELECT mEmail FROM Member WHERE mEmail = @mId AND mPassword = @password')
+    
+    if (member.recordset.length === 0) {
+      throw new Error('密碼錯誤')
+    }
+
+    const result = await pool.request()
+      .input('mId', sql.VarChar, mId)
+      .input('password', sql.VarChar, newPassword)
+      .query(`UPDATE Member SET mPassword = @password WHERE mEmail = @mId`)
+    
+    if (result.rowsAffected[0] > 0) {
+      res.json({ result: 'ok' })
+      return
+    }
+
+    throw new Error('更新失敗')
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
 
 // For Manager use only
 
