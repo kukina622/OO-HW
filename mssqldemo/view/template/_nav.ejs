@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
 <nav class="navbar sticky-top navbar-light bg-light navbar-expand-md">
   <div class="container">
     <a class="navbar-brand" href="#">飾在必行</a>
@@ -29,6 +30,24 @@
       <div class="d-flex" id="search-wrapper">
         <input id="search" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
         <button class="btn btn-outline-success" onclick="search()">Search</button>
+      </div>
+      <div class="dropdown">
+        <div 
+          class="d-flex justify-content-center align-items-center rounded-circle ms-2 cursor-pointer" 
+          style="width: 40px; height: 40px;"
+          data-bs-toggle="dropdown"
+          role='button'
+        >
+          <i class="far fa-user fa-lg" style="color: #959ba4;"></i>
+        </div>
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item" href="/member/edit">
+              <i class="fas fa-id-card"></i>
+              <span>編輯個人資訊</span>
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
