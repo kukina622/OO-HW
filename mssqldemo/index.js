@@ -58,6 +58,8 @@ const auth = (req, res, next) => {
     // check for user credential...
     if (req.session.user || req.session.rId) {
       console.log('authenticated', req.url)
+      res.locals.name = req.session.name
+      res.locals.email = req.session.user || req.session.rId || ""
       next()
     } else {
       console.log('not authenticated')
@@ -129,6 +131,7 @@ app.post('/login', async (req, res) => {
     console.log(result.recordset)
     if (result.recordset.length > 0) {
       req.session.user = username
+      req.session.name = result.recordset[0].mName
       //req.session.region = result.recordset[0].mRegion
       res.redirect('/product')
       return
@@ -141,6 +144,7 @@ app.post('/login', async (req, res) => {
       console.log(manager)
       if (manager.recordset.length > 0) {
         req.session.rId = manager.recordset[0].rId
+        req.session.name = manager.recordset[0].rName
         res.redirect('/manager')
         return
       }
@@ -622,6 +626,10 @@ app.post('/api/member/edit', auth, async (req, res) => {
     
     if (result.rowsAffected[0] > 0) {
       res.json({ result: 'ok' })
+      req.session.reload(() => {
+        req.session.name = name
+        req.session.save();
+      })
       return
     }
   } catch (error) {

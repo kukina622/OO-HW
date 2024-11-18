@@ -40,14 +40,34 @@
         >
           <i class="far fa-user fa-lg" style="color: #959ba4;"></i>
         </div>
-        <ul class="dropdown-menu">
-          <li>
-            <a class="dropdown-item" href="/member/edit">
-              <i class="fas fa-id-card"></i>
-              <span>編輯個人資訊</span>
-            </a>
-          </li>
-        </ul>
+        <div class="dropdown-menu">
+          <div 
+            class="profile d-flex justify-content-center align-items-center gap-2 mt-1 mx-3"
+            onclick="event.stopPropagation()"
+          >
+            <div>
+              <div 
+                class="d-flex align-items-center justify-content-center border"
+                style="width: 45px; height: 45px;"
+              >
+                <i class="far fa-user fa-lg" style="color: #959ba4;"></i>
+              </div>
+            </div>
+            <div>
+              <p class="m-0 h6 mb-1"><%= name %></p>
+              <p class="m-0 text-muted"><%= email %></p>
+            </div>
+          </div>
+          <div class="my-2" style="border: 1px #d6d5d5 solid;"></div>
+          <ul class="list-unstyled m-0">
+            <li>
+              <a class="dropdown-item" href="/member/edit">
+                <i class="fas fa-id-card me-2"></i>
+                <span>編輯個人資訊</span>
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
