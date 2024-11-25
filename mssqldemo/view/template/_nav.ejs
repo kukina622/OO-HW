@@ -15,6 +15,18 @@
           
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="#" onclick="category('Bracelets')" >Bracelets</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="category('Necklaces')">Necklaces</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="category('Rings')">Rings</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" onclick="category('Earrings')">Earrings</a>
+        </li>
+        <li class="nav-item">
           <a id="cartButton" href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#list">
             <i class="fas fa-shopping-cart"></i>
             購物車
@@ -112,6 +124,17 @@
     document.getElementById('cartButton').addEventListener('click', async (e) => {
       await getCart()
     })
+
+
+    const category = async (category) => {
+      const url = `/api/products/${category}`
+      console.log(url)
+      const res = await fetch(url)
+      const json = await res.json()
+      console.log(json)
+      render(json)
+    }
+
   </script>
 </nav>
 
@@ -140,6 +163,8 @@
         </table>
       </div>
       <div class="modal-footer">
+        <h6 align="left" style="color: crimson;">*結帳前請確認住址是否正確，我們將以住址為送貨地址，若需修改請至會員資料進行修改，謝謝！*</h6>
+        <br>
         <p id="total"></p>
         <button id="checkout" onclick="submit()" class="btn btn-outline-primary">結帳</button>
       </div>
