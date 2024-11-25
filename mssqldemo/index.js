@@ -7,8 +7,8 @@ import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import fileUpload from 'express-fileupload';
 
-import region from './public/assets/region.json' assert { type: 'json' }
 
+const region = []
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
 app.use(express.json())
@@ -58,6 +58,8 @@ const auth = (req, res, next) => {
     // check for user credential...
     if (req.session.user || req.session.rId) {
       console.log('authenticated', req.url)
+      res.locals.name = req.session.name
+      res.locals.email = req.session.user || req.session.rId || ""
       next()
     } else {
       console.log('not authenticated')
@@ -129,6 +131,7 @@ app.post('/login', async (req, res) => {
     console.log(result.recordset)
     if (result.recordset.length > 0) {
       req.session.user = username
+      req.session.name = result.recordset[0].mName
       //req.session.region = result.recordset[0].mRegion
       res.redirect('/product')
       return
@@ -141,6 +144,7 @@ app.post('/login', async (req, res) => {
       console.log(manager)
       if (manager.recordset.length > 0) {
         req.session.rId = manager.recordset[0].rId
+        req.session.name = manager.recordset[0].rName
         res.redirect('/manager')
         return
       }
@@ -216,6 +220,39 @@ app.get('/member', auth, async (req, res) => {
   const email = req.session.user
 
   res.render('member/member')
+})
+
+app.get('/member/edit', auth, async (req, res) => {
+  const email = req.session.user
+  try {
+    let pool = await sql.connect(sqlConfig)
+    const result = await pool.request()
+      .input('email', sql.VarChar, email)
+      .query(`
+        SELECT 
+          [birthday], 
+          [mName], 
+          [mAddress], 
+          [mEmail] 
+        FROM Member 
+        WHERE mEmail = @email`
+      )
+
+    if (result.recordset.length === 0) {
+      throw new Error('Member not found')
+    }
+    const member = result.recordset[0];
+
+    res.render('member/edit', {
+      data: {
+        ...member,
+        birthday: member?.birthday?.toISOString().split('T')[0]
+      }
+    })
+
+  } catch (err) {
+    res.send('ERROR: ' + err)
+  }
 })
 
 // restaurant
@@ -322,6 +359,11 @@ app.get('/checkout', async (req, res) => {
   }
 })
 
+// history order
+app.get('/history-order', auth, async (req, res) => {
+  res.render('member/history-order')
+})
+
 // API
 
 app.get('/api/email_validation/:email', async (req, res) => {
@@ -346,13 +388,6 @@ app.get('/api/email_validation/:email', async (req, res) => {
     res.send('ERROR: ' + err)
   }
 })
-
-// app.get('switch_region/:r', authAPI, async (req, res) => {
-//   const region = req.params.r
-//   req.session.region = region
-
-
-// })
 
 app.get('/api/restaurant/:q?', authAPI, async (req, res) => {
   const { q } = req.params
@@ -392,6 +427,81 @@ app.get('/api/product/:q?', authAPI, async (req, res) => {
 
     const result = await request.query(query)
     res.json(result.recordset)
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
+app.get('/api/product/manager/:rId', authAPI, async (req, res) => {
+  try {
+    const pool = await sql.connect(sqlConfig)
+    let query = ''
+    let request = pool.request()
+    request.input('rId', req.params.rId)
+    if (req.query.q) {
+      request.input('q', req.query.q)
+      query = "SELECT * FROM Product WHERE rId = @rId AND pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)"
+    } else {
+      query = "SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)"
+    }
+
+    const result = await request.query(query)
+    res.json(result.recordset)
+  } catch (err) {
+    res.json({ error: err })
+  }
+})
+
+
+app.get("/api/orders", authAPI, async (req, res) => {
+  const mId = req.session.user
+  const { status } = req.query
+  try {
+    if (!mId) throw new Error('Invalid member id')
+
+    const pool = await sql.connect(sqlConfig)
+
+    let request = pool.request()
+      .input('mId', sql.VarChar, mId)
+
+    let query = `
+      SELECT 
+        [Order].*,
+        [Cart].count,
+        [Cart].unitPrice,
+        [Cart].price,
+        Product.pName,
+        Product.image
+      FROM [Order]
+      INNER JOIN Cart ON [Order].oId = [Cart].oId
+      LEFT JOIN Product ON [Cart].pId = Product.pId
+      WHERE [Order].mId = @mId
+    `
+
+    if (status !== "ALL" && status) {
+      request.input('status', sql.NVarChar, status)
+      query += ' AND [Order].status = @status'
+    }
+
+    const result = await request.query(query)
+    const orders = result.recordset
+      .map((x) => ({
+        ...x,
+        oDate: x.oDate.toISOString().split("T")[0]
+      }))
+      .reduce((acc, order) => {
+        const { oId, pName, count, unitPrice, price, image, ...rest } = order;
+
+        acc[oId] = acc[oId] || { ...rest, oId, items: [] };
+        acc[oId].items = [
+          ...acc[oId].items,
+          { pName, count, unitPrice, price, image }
+        ];
+
+        return acc;
+      }, {});
+
+    res.json(Object.values(orders))
   } catch (err) {
     res.json({ error: err })
   }
@@ -513,6 +623,66 @@ app.get('/api/products/:category?', authAPI, async (req, res) => {
     res.status(500).send('Error fetching products: ' + err.message);
   }
 });
+
+
+// edit member profile
+
+app.post('/api/member/edit', auth, async (req, res) => {
+  const mId = req.session.user
+  const { name, address, birthday } = req.body
+  try {
+    const pool = await sql.connect(sqlConfig)
+
+    const result = await pool.request()
+      .input('mId', sql.VarChar, mId)
+      .input('birthday', sql.Date, birthday)
+      .input('mAddress', sql.VarChar, address)
+      .input('mName', sql.VarChar, name)
+      .query(`UPDATE Member SET mName = @mName, mAddress = @mAddress, birthday = @birthday WHERE mEmail = @mId`)
+    
+    if (result.rowsAffected[0] > 0) {
+      res.json({ result: 'ok' })
+      req.session.reload(() => {
+        req.session.name = name
+        req.session.save();
+      })
+      return
+    }
+  } catch (error) {
+    res.status(400).json({ error: err })
+  }
+})
+
+app.post('/api/member/password/edit', auth, async (req, res) => {
+  const mId = req.session.user
+  const { password, newPassword } = req.body
+  try {
+    const pool = await sql.connect(sqlConfig)
+
+    const member = await pool.request()
+      .input('mId', sql.VarChar, mId)
+      .input('password', sql.VarChar, password)
+      .query('SELECT mEmail FROM Member WHERE mEmail = @mId AND mPassword = @password')
+    
+    if (member.recordset.length === 0) {
+      throw new Error('密碼錯誤')
+    }
+
+    const result = await pool.request()
+      .input('mId', sql.VarChar, mId)
+      .input('password', sql.VarChar, newPassword)
+      .query(`UPDATE Member SET mPassword = @password WHERE mEmail = @mId`)
+    
+    if (result.rowsAffected[0] > 0) {
+      res.json({ result: 'ok' })
+      return
+    }
+
+    throw new Error('更新失敗')
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
 
 
 // For Manager use only
