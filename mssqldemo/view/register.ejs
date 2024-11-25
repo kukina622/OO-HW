@@ -24,15 +24,7 @@
     <div class="py-5 text-center">
       <h2>Register</h2>
     </div>
-    <form id="form" action="/submit" method="post" class="needs-validation">
-      <!-- <div class="form-group mb-3">
-        <label for="email">Email address</label>
-        <input value="<%= data.email %>"  type="email" class="form-control<%= (invaild.email) ? ' is-invalid' : '' %>" id="email"  aria-describedby="emailHelp"
-          placeholder="Enter email">
-        <div class="invalid-feedback">
-          Account already existed.
-        </div>
-      </div> -->
+    <form id="form" method="post" class="needs-validation">
       <div class="input-group mb-3 position-relative">
         <input id="email" name="email" type="email" value="<%= data.email %>" class="form-control" placeholder="Recipient's username" aria-label="Recipient's username" aria-describedby="button-addon2">
         <button class="btn btn-outline-secondary" type="button" id="button-addon2" onclick="checkUsernameIsVaild()">Check</button>
@@ -61,7 +53,7 @@
       </div>
       <div class="form-group mb-3 position-relative">
         <label for="address">Address</label>
-        <input value="<%= data.address %>" type="address" class="form-control" id="address" placeholder="Address">
+        <input value="<%= data.address %>" type="address" class="form-control" name="address" id="address" placeholder="Address">
         <div class="invalid-feedback">
           Please provide a vaild address.
         </div>

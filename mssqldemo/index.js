@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { response } from 'express'
 import ejs from 'ejs'
 import sql from 'mssql'
 import session from 'express-session'
@@ -179,12 +179,11 @@ app.post('/register', async (req, res) => {
 
     // member already existed
     if (members.recordset.length > 0) {
-      res.render('register', { region: region, data: body, invaild: { email: 'email' } })
+      res.render('register', { data: body, invaild: { email: 'email' } })
       return
     }
 
     // member need add to db
-
     const birthday = (body.birthday == '') ? null : body.birthday
 
     const newMember = await pool.request()
@@ -202,12 +201,12 @@ app.post('/register', async (req, res) => {
     if (newMember.rowsAffected[0] > 0) {
       // insert ok
       req.session.user = body.email
-      req.session.region = body.region
+      //req.session.region = body.region
 
       res.redirect('/product')
       return
     } else {
-      res.render('register', { region: region, data: body, invaild: {} })
+      res.render('register', { data: body, invaild: {} })
     }
 
   } catch (err) {
@@ -304,7 +303,7 @@ app.get('/checkout', async (req, res) => {
 
     const cart = await pool.request()
       .input('mId', sql.VarChar, mId)
-      .query("SELECT c.price, c.unitPrice, c.count, c.pId, p.pName FROM Cart c, Product p WHERE c.mId = @mId AND c.pId = p.pId AND c.oId IS NULL")
+      .query("SELECT c.price, c.unitPrice, c.count, c.pId, p.pName, m.mAddress FROM Cart c, Product p, Member m WHERE c.mId = @mId AND m.mEmail = @mId AND c.pId = p.pId AND c.oId IS NULL")
     
     //// no product inside cart
     // if (cart.recordset.length == 0) {
@@ -350,6 +349,7 @@ app.get('/checkout', async (req, res) => {
     if (cart_update.rowsAffected[0] > 0) {
       //res.send("RESULT: OK")
       //return
+      console.log(123)
       res.render('checkout', { data: cart.recordset, oId: oId, total: total } )
     }
 
@@ -608,6 +608,22 @@ app.get('/api/cart/delete/:cTime', authAPI, async (req, res) => {
     res.json({ error: err })
   }
 })
+
+//根據分類名稱獲取產品
+app.get('/api/products/:category?', authAPI, async (req, res) => {
+  const category = req.params.category;
+
+  try {
+    const pool = await sql.connect(sqlConfig);
+    const result = await pool.request()
+      .input('category', sql.VarChar, category)
+      .query('SELECT * FROM Product WHERE Category = @category');
+      res.json(result.recordset)
+  } catch (err) {
+    res.status(500).send('Error fetching products: ' + err.message);
+  }
+});
+
 
 // edit member profile
 
@@ -903,6 +919,7 @@ app.get("/api/manager/order/cancel/:oId", authManager, async (req, res) => {
     res.json({ error: err })
   }
 })
+
 
 // Mark Start
 /* 0601 test */
