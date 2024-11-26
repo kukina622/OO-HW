@@ -140,7 +140,7 @@ app.post('/login', async (req, res) => {
       let manager = await pool.request()
         .input('email', sql.VarChar, username)
         .input('password', sql.VarChar, password)
-        .query('SELECT rId FROM Restaurant WHERE email = @email AND password = @password')
+        .query('SELECT rId FROM Manager WHERE email = @email AND password = @password')
       console.log(manager)
       if (manager.recordset.length > 0) {
         req.session.rId = manager.recordset[0].rId
@@ -267,9 +267,9 @@ app.get('/', auth, async (req, res) => {
       result = await pool.request()
         .input('region', req.session.region)
         .input('query', body.q)
-        .query("SELECT * FROM Restaurant WHERE rRegion = @region AND rName LIKE '%@query%'")
+        .query("SELECT * FROM Manager WHERE rRegion = @region AND rName LIKE '%@query%'")
     } else {
-      result = await pool.query(`SELECT * FROM Restaurant WHERE rRegion = '${req.session.region}'`)
+      result = await pool.query(`SELECT * FROM Manager WHERE rRegion = '${req.session.region}'`)
     }
 
     res.render('restaurant/restaurant', { data: result.recordset })
@@ -400,9 +400,9 @@ app.get('/api/restaurant/:q?', authAPI, async (req, res) => {
     // request.input('region', req.session.region)
     // if (req.params.q) {
     //   request.input('q', req.params.q)
-    //   query = "SELECT * FROM Restaurant WHERE rRegion = @region AND rName LIKE '%' +@q + '%'"
+    //   query = "SELECT * FROM Manager WHERE rRegion = @region AND rName LIKE '%' +@q + '%'"
     // } else {
-    //   query = "SELECT * FROM Restaurant WHERE rRegion = @region"
+    //   query = "SELECT * FROM Manager WHERE rRegion = @region"
     // }
 
     const result = await request.query(query)
@@ -931,7 +931,7 @@ app.get('/dbData', async (req, res) => {
     const memberData = await pool.request()
       .query('SELECT * FROM Member')
     const restaurantData = await pool.request()
-      .query('SELECT * FROM Restaurant')
+      .query('SELECT * FROM Manager')
     const cartData = await pool.request()
       .query('SELECT * FROM Cart')
     const orderData = await pool.request()

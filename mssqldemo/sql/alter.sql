@@ -11,3 +11,5 @@ ALTER TABLE [Product] ADD image text;
 
 ALTER TABLE Member ADD mAddress VARCHAR(50);
 ALTER TABLE Member DROP COLUMN mRegion;
+
+exec sp_rename 'Restaurant', 'Manager'
