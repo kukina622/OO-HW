@@ -1,4 +1,5 @@
-import express from "express";
+import express, { response } from "express";
+import ejs from "ejs";
 import sql from "mssql";
 import session from "express-session";
 import { randomUUID } from "crypto";
@@ -96,6 +97,7 @@ app.get("/login", async (req, res) => {
 app.post("/login", async (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
+  console.log(username, password);
 
   try {
     let pool = await sql.connect(sqlConfig);
@@ -121,7 +123,7 @@ app.post("/login", async (req, res) => {
         .input("email", sql.VarChar, username)
         .input("password", sql.VarChar, password)
         .query(
-          "SELECT rId FROM Restaurant WHERE email = @email AND password = @password"
+          "SELECT rId FROM Manager WHERE email = @email AND password = @password"
         );
       console.log(manager);
       if (manager.recordset.length > 0) {
@@ -162,16 +164,11 @@ app.post("/register", async (req, res) => {
 
     // member already existed
     if (members.recordset.length > 0) {
-      res.render("register", {
-        region: region,
-        data: body,
-        invaild: { email: "email" }
-      });
+      res.render("register", { data: body, invaild: { email: "email" } });
       return;
     }
 
     // member need add to db
-
     const birthday = body.birthday == "" ? null : body.birthday;
 
     const newMember = await pool
@@ -179,6 +176,7 @@ app.post("/register", async (req, res) => {
       .input("mEmail", sql.VarChar, body.email)
       .input("mPassword", sql.VarChar, body.password)
       .input("birthday", sql.Date, birthday)
+      //.input('mRegion', sql.NVarChar, body.region)
       .input("mName", sql.NVarChar, body.name)
       .input("mAddress", sql.VarChar, body.address) //加住址
       .query(
@@ -191,12 +189,12 @@ app.post("/register", async (req, res) => {
     if (newMember.rowsAffected[0] > 0) {
       // insert ok
       req.session.user = body.email;
-      req.session.region = body.region;
+      //req.session.region = body.region
 
       res.redirect("/product");
       return;
     } else {
-      res.render("register", { region: region, data: body, invaild: {} });
+      res.render("register", { data: body, invaild: {} });
     }
   } catch (err) {
     res.send("ERROR: " + err);
@@ -255,11 +253,11 @@ app.get("/", auth, async (req, res) => {
         .input("region", req.session.region)
         .input("query", body.q)
         .query(
-          "SELECT * FROM Restaurant WHERE rRegion = @region AND rName LIKE '%@query%'"
+          "SELECT * FROM Manager WHERE rRegion = @region AND rName LIKE '%@query%'"
         );
     } else {
       result = await pool.query(
-        `SELECT * FROM Restaurant WHERE rRegion = '${req.session.region}'`
+        `SELECT * FROM Manager WHERE rRegion = '${req.session.region}'`
       );
     }
 
@@ -297,7 +295,7 @@ app.get("/checkout", async (req, res) => {
       .request()
       .input("mId", sql.VarChar, mId)
       .query(
-        "SELECT c.price, c.unitPrice, c.count, c.pId, p.pName FROM Cart c, Product p WHERE c.mId = @mId AND c.pId = p.pId AND c.oId IS NULL"
+        "SELECT c.price, c.unitPrice, c.count, c.pId, p.pName, m.mAddress FROM Cart c, Product p, Member m WHERE c.mId = @mId AND m.mEmail = @mId AND c.pId = p.pId AND c.oId IS NULL"
       );
 
     //// no product inside cart
@@ -350,6 +348,7 @@ app.get("/checkout", async (req, res) => {
     if (cart_update.rowsAffected[0] > 0) {
       //res.send("RESULT: OK")
       //return
+      console.log(123);
       res.render("checkout", { data: cart.recordset, oId: oId, total: total });
     }
   } catch (err) {
@@ -400,9 +399,9 @@ app.get("/api/restaurant/:q?", authAPI, async (req, res) => {
     // request.input('region', req.session.region)
     // if (req.params.q) {
     //   request.input('q', req.params.q)
-    //   query = "SELECT * FROM Restaurant WHERE rRegion = @region AND rName LIKE '%' +@q + '%'"
+    //   query = "SELECT * FROM Manager WHERE rRegion = @region AND rName LIKE '%' +@q + '%'"
     // } else {
-    //   query = "SELECT * FROM Restaurant WHERE rRegion = @region"
+    //   query = "SELECT * FROM Manager WHERE rRegion = @region"
     // }
 
     const result = await request.query(query);
@@ -617,6 +616,22 @@ app.get("/api/cart/delete/:cTime", authAPI, async (req, res) => {
   }
 });
 
+//根據分類名稱獲取產品
+app.get("/api/products/:category?", authAPI, async (req, res) => {
+  const category = req.params.category;
+
+  try {
+    const pool = await sql.connect(sqlConfig);
+    const result = await pool
+      .request()
+      .input("category", sql.VarChar, category)
+      .query("SELECT * FROM Product WHERE Category = @category");
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).send("Error fetching products: " + (err as Error).message);
+  }
+});
+
 // edit member profile
 
 app.post("/api/member/edit", auth, async (req, res) => {
@@ -644,7 +659,7 @@ app.post("/api/member/edit", auth, async (req, res) => {
       return;
     }
   } catch (error) {
-    res.status(400).json({ error });
+    res.status(400).json({ error: error });
   }
 });
 
@@ -929,9 +944,7 @@ app.get("/dbData", async (req, res) => {
     const pool = await sql.connect(sqlConfig);
     const productData = await pool.request().query("SELECT * FROM Product");
     const memberData = await pool.request().query("SELECT * FROM Member");
-    const restaurantData = await pool
-      .request()
-      .query("SELECT * FROM Restaurant");
+    const restaurantData = await pool.request().query("SELECT * FROM Manager");
     const cartData = await pool.request().query("SELECT * FROM Cart");
     const orderData = await pool.request().query('SELECT * FROM "Order"');
     res.render("dbData", {

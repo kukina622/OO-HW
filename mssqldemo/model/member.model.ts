@@ -1,6 +1,9 @@
 import sql from "mssql";
 import BaseModel from "./base.model";
+import { injectable } from "inversify";
+import "reflect-metadata";
 
+@injectable()
 export default class MemberModel extends BaseModel {
   async loginByUser(username: string, password: string) {
     const pool = await this.getPool();
@@ -9,7 +12,7 @@ export default class MemberModel extends BaseModel {
       .input("username", sql.VarChar, username)
       .input("password", sql.VarChar, password)
       .query(
-        "select * from member where username = @username and password = @password"
+        "select * from Member where mEmail = @username and mPassword = @password"
       );
   }
 
@@ -20,7 +23,7 @@ export default class MemberModel extends BaseModel {
       .input("email", sql.VarChar, username)
       .input("password", sql.VarChar, password)
       .query(
-        "SELECT rId FROM Restaurant WHERE email = @email AND password = @password"
+        "SELECT rId FROM Manager WHERE mEmail = @email AND mPassword = @password"
       );
   }
 
@@ -29,7 +32,7 @@ export default class MemberModel extends BaseModel {
     return pool
       .request()
       .input("email", sql.VarChar, email)
-      .query("select * from member where email = @email");
+      .query("select * from Member where mEmail = @email");
   }
 
   async createMember(

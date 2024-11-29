@@ -2,23 +2,20 @@ import express, { Router, Request, Response } from "express";
 import BaseController from "./base.controller";
 import MemberModel from "../model/member.model";
 import { auth } from "../middleware/auth.middleware";
+import { lazyInject } from "../di/di-container";
 
 export default class MemberController extends BaseController {
-  private memberModel: MemberModel;
-
-  constructor(router: Router, memberModel: MemberModel) {
-    super(router);
-    this.memberModel = memberModel;
-  }
+  @lazyInject("MemberModel")
+  private memberModel!: MemberModel;
 
   initRoutes(): void {
-    this.router.get("/login", this.loginPage);
-    this.router.post("/login", this.login);
-    this.router.get("/logout", auth, this.logout);
-    this.router.get("/register", this.registerPage);
-    this.router.post("/register", this.register);
-    this.router.get("/member", auth, this.memberPage);
-    this.router.get("/member/edit", auth, this.memberEditPage);
+    this.router.get("/login", this.loginPage.bind(this));
+    this.router.post("/login", this.login.bind(this));
+    this.router.get("/logout", auth, this.logout.bind(this));
+    this.router.get("/register", this.registerPage.bind(this));
+    this.router.post("/register", this.register.bind(this));
+    this.router.get("/member", auth, this.memberPage.bind(this));
+    this.router.get("/member/edit", auth, this.memberEditPage.bind(this));
   }
 
   private loginPage(req: Request, res: Response) {
@@ -68,11 +65,7 @@ export default class MemberController extends BaseController {
       const body = req.body;
       const members = await this.memberModel.getMemberByEmail(body.email);
       if (members.recordset.length > 0) {
-        res.render("register", {
-          region: "",
-          data: body,
-          invaild: { email: "email" }
-        });
+        res.render("register", { data: body, invaild: { email: "email" } });
         return;
       }
       const birthday = body.birthday == "" ? null : body.birthday;
@@ -86,8 +79,6 @@ export default class MemberController extends BaseController {
 
       if (newMember.rowsAffected[0] > 0) {
         req.session.user = body.email;
-        req.session.region = body.region;
-
         res.redirect("/product");
         return;
       }
@@ -108,10 +99,11 @@ export default class MemberController extends BaseController {
         return;
       }
       const result = await this.memberModel.getMemberByEmail(email);
+
       if (result.recordset.length === 0) {
-        res.redirect("/login");
-        return;
+        throw new Error("Member not found");
       }
+      
       const member = result.recordset[0];
       res.render("member/edit", {
         data: {
