@@ -83,6 +83,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// OK
 app.get("/login", async (req, res) => {
   if (req.session.user) {
     res.redirect("/product");
@@ -94,6 +95,7 @@ app.get("/login", async (req, res) => {
   }
   res.render("login");
 });
+// OK
 app.post("/login", async (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
@@ -141,15 +143,18 @@ app.post("/login", async (req, res) => {
     console.log(err);
   }
 });
+// OK
 app.get("/logout", auth, (req, res) => {
   req.session.destroy(() => {
     console.log("session destroyed");
     res.redirect("/login");
   });
 });
+// OK
 app.get("/register", async (req, res) => {
   res.render("register", { data: {}, invaild: {} }); //拿掉region: region,
 });
+// OK
 app.post("/register", async (req, res) => {
   try {
     const body = req.body;
@@ -203,12 +208,13 @@ app.post("/register", async (req, res) => {
 
 // HTTP request handler
 // For front-end
+// OK
 app.get("/member", auth, async (req, res) => {
   const email = req.session.user;
 
   res.render("member/member");
 });
-
+// OK
 app.get("/member/edit", auth, async (req, res) => {
   const email = req.session.user;
   try {
@@ -268,6 +274,7 @@ app.get("/", auth, async (req, res) => {
 });
 
 //product
+// OK
 app.get("/product", auth, async (req, res) => {
   const body = req.body;
 
@@ -363,8 +370,8 @@ app.get("/history-order", auth, async (req, res) => {
 });
 
 // API
-
-app.get("/api/email_validation/:email", async (req, res) => {
+// OK
+app.get("/api/email-validation/:email", async (req, res) => {
   const { email } = req.params;
 
   try {
@@ -410,6 +417,7 @@ app.get("/api/restaurant/:q?", authAPI, async (req, res) => {
     res.json({ error: err });
   }
 });
+// OK
 app.get("/api/product/:q?", authAPI, async (req, res) => {
   try {
     const pool = await sql.connect(sqlConfig);
@@ -617,6 +625,7 @@ app.get("/api/cart/delete/:cTime", authAPI, async (req, res) => {
 });
 
 //根據分類名稱獲取產品
+// OK
 app.get("/api/products/:category?", authAPI, async (req, res) => {
   const category = req.params.category;
 
@@ -633,7 +642,7 @@ app.get("/api/products/:category?", authAPI, async (req, res) => {
 });
 
 // edit member profile
-
+// OK
 app.post("/api/member/edit", auth, async (req, res) => {
   const mId = req.session.user;
   const { name, address, birthday } = req.body;
@@ -663,6 +672,7 @@ app.post("/api/member/edit", auth, async (req, res) => {
   }
 });
 
+// OK
 app.post("/api/member/password/edit", auth, async (req, res) => {
   const mId = req.session.user;
   const { password, newPassword } = req.body;

@@ -57,4 +57,32 @@ export default class MemberModel extends BaseModel {
           " VALUES(@mEmail, @mPassword, @birthday, @mName, @mAddress);"
       );
   }
+
+  async updateMemberByEmail(
+    mId: string,
+    name: string,
+    address: string,
+    birthday: string
+  ) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("mId", sql.VarChar, mId)
+      .input("birthday", sql.Date, birthday)
+      .input("mAddress", sql.VarChar, address)
+      .input("mName", sql.VarChar, name)
+      .query(
+        `UPDATE Member SET mName = @mName, mAddress = @mAddress, birthday = @birthday WHERE mEmail = @mId`
+      );
+  }
+
+  async updateMemberPasswordByEmail(mId: string, newPassword: string) {
+    const pool = await this.getPool();
+
+    return pool
+      .request()
+      .input("mId", sql.VarChar, mId)
+      .input("password", sql.VarChar, newPassword)
+      .query(`UPDATE Member SET mPassword = @password WHERE mEmail = @mId`);
+  }
 }

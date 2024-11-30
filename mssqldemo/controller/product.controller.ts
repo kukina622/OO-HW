@@ -11,6 +11,11 @@ export default class ProductController extends BaseController {
   initRoutes(): void {
     this.router.get("/product", auth, this.productPage.bind(this));
     this.router.get("/api/product/:q?", authAPI, this.searchProduct.bind(this));
+    this.router.get(
+      "/api/products/:category?",
+      authAPI,
+      this.searchProductByCategory.bind(this)
+    );
   }
 
   private async productPage(req: Request, res: Response) {
@@ -21,6 +26,12 @@ export default class ProductController extends BaseController {
   private async searchProduct(req: Request, res: Response) {
     const q = req.params.q;
     const products = await this.productModel.getProductByQuery(q);
+    res.json(products.recordset);
+  }
+
+  private async searchProductByCategory(req: Request, res: Response) {
+    const category = req.params.category;
+    const products = await this.productModel.getProductByCategory(category);
     res.json(products.recordset);
   }
 }

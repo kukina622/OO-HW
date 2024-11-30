@@ -16,6 +16,16 @@ export default class MemberController extends BaseController {
     this.router.post("/register", this.register.bind(this));
     this.router.get("/member", auth, this.memberPage.bind(this));
     this.router.get("/member/edit", auth, this.memberEditPage.bind(this));
+    this.router.post(
+      "/api/email-validation/:email",
+      this.emailValidation.bind(this)
+    );
+    this.router.post("/api/member/edit", auth, this.editMember.bind(this));
+    this.router.post(
+      "/api/member/password/edit",
+      auth,
+      this.editPassword.bind(this)
+    );
   }
 
   private loginPage(req: Request, res: Response) {
@@ -103,7 +113,7 @@ export default class MemberController extends BaseController {
       if (result.recordset.length === 0) {
         throw new Error("Member not found");
       }
-      
+
       const member = result.recordset[0];
       res.render("member/edit", {
         data: {
@@ -112,5 +122,72 @@ export default class MemberController extends BaseController {
         }
       });
     } catch (error) {}
+  }
+
+  private async emailValidation(req: Request, res: Response) {
+    const { email } = req.params;
+    const members = await this.memberModel.getMemberByEmail(email);
+    if (members.recordset.length > 0) {
+      res.json({ result: "account-existed" });
+      return;
+    }
+    res.json({ result: "ok" });
+    return;
+  }
+
+  private async editMember(req: Request, res: Response) {
+    try {
+      const mId = req.session.user;
+      const { name, address, birthday } = req.body;
+      if (!mId) {
+        res.redirect("/login");
+        return;
+      }
+
+      const result = await this.memberModel.updateMemberByEmail(
+        mId,
+        name,
+        address,
+        birthday
+      );
+
+      if (result.rowsAffected[0] > 0) {
+        res.json({ result: "ok" });
+        req.session.reload(() => {
+          req.session.name = name;
+          req.session.save();
+        });
+        return;
+      }
+      throw new Error("更新失敗");
+    } catch (error) {
+      res.status(400).json({ error: error });
+    }
+  }
+
+  private async editPassword(req: Request, res: Response) {
+    const mId = req.session.user as string;
+    const { password, newPassword } = req.body;
+    try {
+      const member = await this.memberModel.loginByUser(mId, password);
+
+      if (member.recordset.length === 0) {
+        throw new Error("密碼錯誤");
+      }
+
+      const result = await this.memberModel.updateMemberPasswordByEmail(
+        mId,
+        newPassword
+      );
+
+      if (result.rowsAffected[0] > 0) {
+        res.json({ result: "ok" });
+        return;
+      }
+
+      throw new Error("更新失敗");
+    } catch (error) {
+      res.status(400).json({ error: error });
+    }
   }
 }

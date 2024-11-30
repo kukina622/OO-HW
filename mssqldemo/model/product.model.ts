@@ -1,4 +1,5 @@
 import BaseModel from "./base.model";
+import sql from "mssql";
 
 export default class ProductModel extends BaseModel {
   async getAvailableProducts() {
@@ -22,5 +23,13 @@ export default class ProductModel extends BaseModel {
     }
 
     return request.query(query);
+  }
+
+  async getProductByCategory(category: string) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("category", sql.VarChar, category)
+      .query("SELECT * FROM Product WHERE Category = @category");
   }
 }
