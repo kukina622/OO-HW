@@ -147,11 +147,12 @@
     const renderRow = (item) => {
       return `
         <tr id="cart-item-${item.cTime}">
-          <td>${item.pName}</td>
-          <td class="text-right">$${item.unitPrice[0]}</td>
-          <td class="text-right">${item.count}</td>
-          <td class="text-right">$${item.price}</td>
-          <th><button onclick="deleteCart('${item.cTime}', ${item.price})" class="delete-btn btn btn-danger"> 
+          <td class="align-middle">${item.pName}</td>
+          <td class="text-right align-middle">$${item.unitPrice[0]}</td>
+          <td class="text-right align-middle">${item.count}</td>
+          <td class="text-right align-middle">$${item.price}</td>
+          <td>
+            <button onclick="deleteCart('${item.cTime}', ${item.price})" class="delete-btn btn btn-danger"> 
               &times;
             </button>
           </td>
