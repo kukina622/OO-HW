@@ -45,7 +45,8 @@ export default class MemberController extends BaseController {
     const password: string = req.body.password;
     const result = await this.memberModel.loginByUser(username, password);
     if (result.recordset.length > 0) {
-      req.session.user = result.recordset[0];
+      req.session.user = username;
+      req.session.name = result.recordset[0].mName;
       res.redirect("/product");
       return;
     }
@@ -53,6 +54,7 @@ export default class MemberController extends BaseController {
     const manager = await this.memberModel.loginByManager(username, password);
     if (manager.recordset.length > 0) {
       req.session.rId = manager.recordset[0].rId;
+      req.session.name = manager.recordset[0].rName;
       res.redirect("/manager");
       return;
     }
