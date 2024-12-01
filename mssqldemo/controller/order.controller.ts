@@ -1,6 +1,7 @@
 import { lazyInject } from "../di/di-container";
 import { auth, authAPI } from "../middleware/auth.middleware";
 import CartModel from "../model/cart.model";
+import MemberModel from "../model/member.model";
 import OrderModel from "../model/order.model";
 import ProductModel from "../model/product.model";
 import BaseController from "./base.controller";
@@ -16,6 +17,9 @@ export default class OrderController extends BaseController {
   @lazyInject("ProductModel")
   private productModel!: ProductModel;
 
+  @lazyInject("MemberModel")
+  private memberModel!: MemberModel;
+
   initRoutes(): void {
     this.router.get("/history-order", auth, this.historyOrderPage.bind(this));
     this.router.get("/api/orders", authAPI, this.getOrders.bind(this));
@@ -30,6 +34,8 @@ export default class OrderController extends BaseController {
       authAPI,
       this.deleteProductFromCart.bind(this)
     );
+
+    this.router.get("/checkout", auth, this.checkout.bind(this));
   }
 
   private async historyOrderPage(req: Request, res: Response) {
@@ -125,6 +131,38 @@ export default class OrderController extends BaseController {
       res.json({ error: "刪除失敗" });
     } catch (err) {
       res.json({ error: err });
+    }
+  }
+
+  private async checkout(req: Request, res: Response) {
+    const mId = req.session.user as string;
+    try {
+      const cart = await this.cartModel.getCartByMember(mId);
+      if (cart.recordset.length == 0) {
+        throw new Error("Cart is empty");
+      }
+      const {
+        recordset: [member]
+      } = await this.memberModel.getMemberByEmail(mId);
+
+      const address = member.mAddress;
+
+      const { oId, totalPrice } = await this.orderModel.checkout(mId);
+      res.render("checkout", {
+        data: cart.recordset.map((x) => ({
+          ...x,
+          mAddress: address
+        })),
+        oId,
+        total: totalPrice
+      });
+    } catch (error) {
+      const p = await this.productModel.getAvailableProducts();
+      res.render("product", {
+        data: p.recordset,
+        message: "結帳失敗",
+        errorType: "checkoutError"
+      });
     }
   }
 }

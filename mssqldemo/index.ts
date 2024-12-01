@@ -290,6 +290,7 @@ app.get("/product", auth, async (req, res) => {
   }
 });
 
+// OK
 app.get("/checkout", async (req, res) => {
   const oId = randomUUID();
   const mId = req.session.user;

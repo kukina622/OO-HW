@@ -1,6 +1,7 @@
 import { injectable } from "inversify";
 import BaseModel from "./base.model";
 import sql from "mssql";
+import { randomUUID } from "crypto";
 
 @injectable()
 export default class OrderModel extends BaseModel {
@@ -28,5 +29,84 @@ export default class OrderModel extends BaseModel {
     }
 
     return request.query(query);
+  }
+
+  async checkout(mId: string): Promise<{
+    oId: string;
+    totalPrice: number;
+  }> {
+    const pool = await this.getPool();
+    const oId = randomUUID();
+    const tx = await pool.transaction().begin();
+
+    const carts = await tx.request().input("mId", sql.VarChar, mId).query(`
+        SELECT 
+          Cart.mId, 
+          Cart.cTime, 
+          Cart.count, 
+          Cart.unitPrice, 
+          Cart.price,
+          Product.pCount,
+          Product.rId,
+          Product.pId
+        FROM Cart 
+        INNER JOIN Product ON Cart.pId = Product.pId
+        WHERE Cart.mId = @mId AND Cart.oId IS NULL
+      `);
+
+    if (carts.recordset.length === 0) {
+      await tx.rollback();
+      return Promise.reject("Cart is empty");
+    }
+
+    let totalPrice = 0;
+    for (let index = 0; index < carts.recordset.length; index++) {
+      const cart = carts.recordset[index];
+      if (cart.count > cart.pCount) {
+        await tx.rollback();
+        return Promise.reject("Not enough product");
+      }
+
+      const result = await tx
+        .request()
+        .input("count", sql.Int, cart.count)
+        .input("pId", sql.VarChar, cart.pId).query(`
+          UPDATE Product SET pCount = pCount - @count WHERE pId = @pId
+        `);
+
+      if (result.rowsAffected[0] !== 1) {
+        await tx.rollback();
+        return Promise.reject("Update product failed");
+      }
+
+      totalPrice += cart.price;
+    }
+
+    await tx
+      .request()
+      .input("oId", sql.Char, oId)
+      .input("oDate", sql.Date, new Date())
+      .input("total", sql.Int, totalPrice)
+      .input("mId", sql.VarChar, mId)
+      .input("rId", sql.Char, carts.recordset[0].rId).query(`
+        INSERT INTO [Order] (oId, oDate, total, mId, rId, status) 
+        VALUES(@oId, @oDate, @total, @mId, @rId, 'Pending')
+      `);
+
+    const cartUpdate = await tx
+      .request()
+      .input("oId", sql.VarChar, oId)
+      .input("mId", sql.VarChar, mId).query(`
+        UPDATE Cart SET oId = @oId WHERE mId = @mId AND oId IS NULL
+      `);
+
+    if (cartUpdate.rowsAffected[0] === 0) {
+      await tx.rollback();
+      return Promise.reject("Update cart failed");
+    }
+
+    await tx.commit();
+
+    return { oId, totalPrice };
   }
 }

@@ -17,8 +17,16 @@ export default class ProductModel extends BaseModel {
       .request()
       .input("pId", sql.Char, pId)
       .query(
-        "SELECT unitPrice, rId FROM Product WHERE pId = @pId AND (pCount >= 0 OR pCount IS NULL)"
+        "SELECT * FROM Product WHERE pId = @pId AND (pCount >= 0 OR pCount IS NULL)"
       );
+  }
+
+  async getProductByPid(pId: string) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("pId", sql.Char, pId)
+      .query("SELECT * FROM Product WHERE pId = @pId");
   }
 
   async getProductByQuery(q?: string) {

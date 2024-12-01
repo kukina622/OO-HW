@@ -31,6 +31,12 @@
     }
   </style>
   <title>產品</title>
+  <% if (typeof errorType !== 'undefined'){%>
+    <script>
+      alert(`<%= typeof message !== 'undefined' ? message : "發生錯誤" %>` )
+      window.location.href = '/product'
+    </script>
+  <% } %>
 </head>
 
 <body>
