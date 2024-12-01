@@ -1,12 +1,24 @@
+import { injectable } from "inversify";
 import BaseModel from "./base.model";
 import sql from "mssql";
 
+@injectable()
 export default class ProductModel extends BaseModel {
   async getAvailableProducts() {
     const pool = await this.getPool();
     return pool
       .request()
       .query("SELECT * FROM Product WHERE pCount IS NULL OR pCount >= 0");
+  }
+
+  async getAvailableProductByPid(pId: string) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("pId", sql.Char, pId)
+      .query(
+        "SELECT unitPrice, rId FROM Product WHERE pId = @pId AND (pCount >= 0 OR pCount IS NULL)"
+      );
   }
 
   async getProductByQuery(q?: string) {

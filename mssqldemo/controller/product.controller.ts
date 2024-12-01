@@ -2,10 +2,10 @@ import { lazyInject } from "../di/di-container";
 import { auth, authAPI } from "../middleware/auth.middleware";
 import ProductModel from "../model/product.model";
 import BaseController from "./base.controller";
-import express, { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 
 export default class ProductController extends BaseController {
-  @lazyInject("MemberModel")
+  @lazyInject("ProductModel")
   private productModel!: ProductModel;
 
   initRoutes(): void {

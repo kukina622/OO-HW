@@ -4,6 +4,7 @@ import fileUpload from "express-fileupload";
 import BaseController from "./controller/base.controller";
 import MemberController from "./controller/member.controller";
 import ProductController from "./controller/product.controller";
+import OrderController from "./controller/order.controller";
 import "./di/di-container";
 
 const appInit = async () => {
@@ -26,7 +27,8 @@ const appInit = async () => {
 
   const controllers: BaseController[] = [
     new MemberController(app),
-    new ProductController(app)
+    new ProductController(app),
+    new OrderController(app)
   ];
 
   controllers.forEach((controller) => {

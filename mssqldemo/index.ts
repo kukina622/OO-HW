@@ -305,16 +305,12 @@ app.get("/checkout", async (req, res) => {
         "SELECT c.price, c.unitPrice, c.count, c.pId, p.pName, m.mAddress FROM Cart c, Product p, Member m WHERE c.mId = @mId AND m.mEmail = @mId AND c.pId = p.pId AND c.oId IS NULL"
       );
 
-    //// no product inside cart
-    // if (cart.recordset.length == 0) {
-    //   res.render('error', { message: "Your cart is empty." });
-    //   return
-    // }
     if (cart.recordset.length == 0) {
       const pool = await sql.connect(sqlConfig);
       const result = await pool
         .request()
         .query("SELECT * FROM Product WHERE pCount IS NULL OR pCount >= 0");
+
       res.render("product", {
         data: result.recordset,
         message: "Your cart is empty.",
@@ -353,9 +349,6 @@ app.get("/checkout", async (req, res) => {
       .query("UPDATE Cart SET oId = @oId WHERE mId = @mId AND oId IS NULL");
 
     if (cart_update.rowsAffected[0] > 0) {
-      //res.send("RESULT: OK")
-      //return
-      console.log(123);
       res.render("checkout", { data: cart.recordset, oId: oId, total: total });
     }
   } catch (err) {
@@ -365,6 +358,7 @@ app.get("/checkout", async (req, res) => {
 });
 
 // history order
+// OK
 app.get("/history-order", auth, async (req, res) => {
   res.render("member/history-order");
 });
@@ -395,28 +389,6 @@ app.get("/api/email-validation/:email", async (req, res) => {
   }
 });
 
-app.get("/api/restaurant/:q?", authAPI, async (req, res) => {
-  const { q } = req.params;
-
-  try {
-    const pool = await sql.connect(sqlConfig);
-
-    let query = "";
-    let request = pool.request();
-    // request.input('region', req.session.region)
-    // if (req.params.q) {
-    //   request.input('q', req.params.q)
-    //   query = "SELECT * FROM Manager WHERE rRegion = @region AND rName LIKE '%' +@q + '%'"
-    // } else {
-    //   query = "SELECT * FROM Manager WHERE rRegion = @region"
-    // }
-
-    const result = await request.query(query);
-    res.json(result.recordset);
-  } catch (err) {
-    res.json({ error: err });
-  }
-});
 // OK
 app.get("/api/product/:q?", authAPI, async (req, res) => {
   try {
@@ -440,28 +412,7 @@ app.get("/api/product/:q?", authAPI, async (req, res) => {
   }
 });
 
-app.get("/api/product/manager/:rId", authAPI, async (req, res) => {
-  try {
-    const pool = await sql.connect(sqlConfig);
-    let query = "";
-    let request = pool.request();
-    request.input("rId", req.params.rId);
-    if (req.query.q) {
-      request.input("q", req.query.q);
-      query =
-        "SELECT * FROM Product WHERE rId = @rId AND pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)";
-    } else {
-      query =
-        "SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)";
-    }
-
-    const result = await request.query(query);
-    res.json(result.recordset);
-  } catch (err) {
-    res.json({ error: err });
-  }
-});
-
+// OK
 app.get("/api/orders", authAPI, async (req, res) => {
   const mId = req.session.user;
   const { status } = req.query;
@@ -516,6 +467,7 @@ app.get("/api/orders", authAPI, async (req, res) => {
 });
 
 //**** */select cart
+// OK
 app.get("/api/cart", authAPI, async (req, res) => {
   const mId = req.session.user;
   console.log(mId);
@@ -542,9 +494,9 @@ app.get("/api/cart", authAPI, async (req, res) => {
   } catch (err) {
     console.log(err);
   }
-  // res.render('cart', {cartData : result})
 });
-// select (update) cart
+
+// OK
 app.get("/api/cart/add/:pId/:count", authAPI, async (req, res) => {
   const { pId, count } = req.params;
   const mId = req.session.user;
@@ -558,7 +510,7 @@ app.get("/api/cart/add/:pId/:count", authAPI, async (req, res) => {
       .input("pId", sql.Char, pId)
       .query(
         "SELECT unitPrice, rId FROM Product WHERE pId = @pId AND (pCount >= 0 OR pCount IS NULL)"
-      ); //pCount = NULL?
+      );
 
     if (c.recordset.length == 0) {
       res.json({ error: "商品不存在" });
@@ -569,19 +521,7 @@ app.get("/api/cart/add/:pId/:count", authAPI, async (req, res) => {
     const unitPrice = product.unitPrice;
     const price = _count * unitPrice;
 
-    // // check products in cart is from the same restaurant
-    // const check = await pool.request()
-    //   .input('rId', sql.Char, product.rId)
-    //   .query(`SELECT rId FROM Cart, Product WHERE Cart.mId = '${mId}' AND oId IS NULL AND Cart.pId = Product.pId`)
 
-    // console.log(check.recordset)
-
-    // if (check.recordset.length > 0 && check.recordset[0].rId != product.rId) {
-    //   res.json({error: "購物車中有來自其他餐廳的商品，請先刪除。"})
-    //   return
-    // }
-
-    //
     const result = await pool
       .request()
       .input("pId", sql.Char, pId)
@@ -600,6 +540,7 @@ app.get("/api/cart/add/:pId/:count", authAPI, async (req, res) => {
   }
 });
 
+// OK
 app.get("/api/cart/delete/:cTime", authAPI, async (req, res) => {
   const { cTime } = req.params;
   const mId = req.session.user;
@@ -709,6 +650,26 @@ app.post("/api/member/password/edit", auth, async (req, res) => {
 });
 
 // For Manager use only
+app.get("/api/manager/product", authAPI, async (req, res) => {
+  try {
+    const pool = await sql.connect(sqlConfig);
+    let query = "";
+    let request = pool.request().input("rId", req.query.rId);
+    if (req.query.q) {
+      request.input("q", req.query.q);
+      query =
+        "SELECT * FROM Product WHERE rId = @rId AND pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)";
+    } else {
+      query =
+        "SELECT * FROM Product WHERE rId = @rId AND (pCount IS NULL OR pCount >= 0)";
+    }
+
+    const result = await request.query(query);
+    res.json(result.recordset);
+  } catch (err) {
+    res.json({ error: err });
+  }
+});
 
 app.get("/manager", authManager, async (req, res) => {
   try {
