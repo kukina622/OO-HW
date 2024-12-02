@@ -13,3 +13,5 @@ ALTER TABLE Member ADD mAddress VARCHAR(50);
 ALTER TABLE Member DROP COLUMN mRegion;
 
 exec sp_rename 'Restaurant', 'Manager'
+
+ALTER TABLE [Product] ADD Category varchar(50); 

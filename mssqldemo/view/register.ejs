@@ -103,7 +103,7 @@
 
       const checkUsernameIsVaild = async () => {
         const emailInput = document.getElementById('email')
-        const url = `/api/email_validation/${emailInput.value}`
+        const url = `/api/email-validation/${emailInput.value}`
         const res = await fetch(url, options)
         const json = await res.json()
         if (json.result === 'ok') {

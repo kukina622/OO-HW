@@ -31,11 +31,17 @@
     }
   </style>
   <title>產品</title>
+  <% if (typeof errorType !== 'undefined'){%>
+    <script>
+      alert(`<%= typeof message !== 'undefined' ? message : "發生錯誤" %>` )
+      window.location.href = '/product'
+    </script>
+  <% } %>
 </head>
 
 <body>
+  <%- include('template/_nav', {action: 'product'}) %> 
   <div class="container">
-    <%- include('template/_nav', {action: 'product'}) %> 
       <br class="my-5">
       <br class="my-5">
       <br class="my-5">

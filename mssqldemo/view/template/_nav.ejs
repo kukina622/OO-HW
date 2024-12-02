@@ -9,7 +9,7 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/product">Home</a>
+          <a class="nav-link active" aria-current="page" href="/product">產品</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/history-order">我的歷史訂單</a>
@@ -36,7 +36,7 @@
         <li class="nav-item">
         </li>
         <li class="nav-item">
-          <a class="nav-link text-danger" href="/logout">Logout</a>
+          <a class="nav-link text-danger" href="/logout">登出</a>
         </li>
       </ul>
       <div class="d-flex" id="search-wrapper">
@@ -147,11 +147,12 @@
     const renderRow = (item) => {
       return `
         <tr id="cart-item-${item.cTime}">
-          <td>${item.pName}</td>
-          <td class="text-right">$${item.unitPrice[0]}</td>
-          <td class="text-right">${item.count}</td>
-          <td class="text-right">$${item.price}</td>
-          <th><button onclick="deleteCart('${item.cTime}', ${item.price})" class="delete-btn btn btn-danger"> 
+          <td class="align-middle">${item.pName}</td>
+          <td class="text-right align-middle">$${item.unitPrice[0]}</td>
+          <td class="text-right align-middle">${item.count}</td>
+          <td class="text-right align-middle">$${item.price}</td>
+          <td>
+            <button onclick="deleteCart('${item.cTime}', ${item.price})" class="delete-btn btn btn-danger"> 
               &times;
             </button>
           </td>
