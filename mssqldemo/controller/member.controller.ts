@@ -15,10 +15,10 @@ export default class MemberController extends BaseController {
     this.router.post("/login", this.login.bind(this));
     this.router.get("/logout", auth, this.logout.bind(this));
     this.router.get("/register", this.registerPage.bind(this));
-    this.router.post("/register", this.register.bind(this));
+    this.router.post("/api/register", this.register.bind(this));
     this.router.get("/member", auth, this.memberPage.bind(this));
     this.router.get("/member/edit", auth, this.memberEditPage.bind(this));
-    this.router.post(
+    this.router.get(
       "/api/email-validation/:email",
       this.emailValidation.bind(this)
     );
@@ -83,7 +83,7 @@ export default class MemberController extends BaseController {
       const body = req.body;
       const members = await this.memberModel.getMemberByEmail(body.email);
       if (members.recordset.length > 0) {
-        res.render("register", { data: body, invaild: { email: "email" } });
+        res.json({ result: "account-existed" });
         return;
       }
       const birthday = body.birthday == "" ? null : body.birthday;
@@ -97,12 +97,15 @@ export default class MemberController extends BaseController {
 
       if (newMember.rowsAffected[0] > 0) {
         req.session.user = body.email;
+        req.session.name = body.name;
         res.redirect("/product");
         return;
       }
 
-      res.render("register", { region: "", data: body, invaild: {} });
-    } catch (error) {}
+      res.json({ result: "error" });
+    } catch (error) {
+      res.status(400).json({ error: error });
+    }
   }
 
   private async memberPage(req: Request, res: Response) {
