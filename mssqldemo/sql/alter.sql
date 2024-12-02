@@ -15,3 +15,13 @@ ALTER TABLE Member DROP COLUMN mRegion;
 exec sp_rename 'Restaurant', 'Manager'
 
 ALTER TABLE [Product] ADD Category varchar(50); 
+
+ALTER TABLE [Order] DROP CONSTRAINT status_check; 
+ALTER TABLE [Order]
+ADD CONSTRAINT [status_check] CHECK([status] IN(
+  'Pending',
+  'Preparing',
+  'Shipped',
+  'Completed', 
+  'Cancelled'
+));

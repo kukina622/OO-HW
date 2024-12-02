@@ -21,10 +21,10 @@
 var getStatusName = function(status) {
   const mapping = {
     'Pending': '待處理',
-    'Confirmed': '已確認',
+    'Preparing': '準備中',
+    'Shipped': '已出貨',
     'Completed': '已完成',
-    'Cancelled': '已取消',
-    'Preparing': '準備中'
+    'Cancelled': '已取消'
   };
 
   return mapping[status];

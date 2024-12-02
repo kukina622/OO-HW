@@ -3,7 +3,7 @@ import BaseModel from "./base.model";
 import sql from "mssql";
 import { randomUUID } from "crypto";
 
-type Status = "Pending" | "Confirmed" | "Completed" | "Cancelled" | "Preparing";
+type Status = "Pending" | "Preparing" | "Shipped" | "Completed" | "Cancelled";
 
 @injectable()
 export default class OrderModel extends BaseModel {
