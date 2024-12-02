@@ -9,6 +9,8 @@ export default class MemberController extends BaseController {
   private memberModel!: MemberModel;
 
   initRoutes(): void {
+    this.router.get("/", this.index.bind(this));
+
     this.router.get("/login", this.loginPage.bind(this));
     this.router.post("/login", this.login.bind(this));
     this.router.get("/logout", auth, this.logout.bind(this));
@@ -26,6 +28,10 @@ export default class MemberController extends BaseController {
       auth,
       this.editPassword.bind(this)
     );
+  }
+
+  private index(req: Request, res: Response) {
+    res.redirect("/login");
   }
 
   private loginPage(req: Request, res: Response) {
