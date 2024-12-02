@@ -1,6 +1,7 @@
 import { injectable } from "inversify";
 import BaseModel from "./base.model";
 import sql from "mssql";
+import { randomUUID } from "crypto";
 
 @injectable()
 export default class ProductModel extends BaseModel {
@@ -21,6 +22,16 @@ export default class ProductModel extends BaseModel {
       );
   }
 
+  async getAvailableProductByRid(rId: string) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("rId", sql.Char, rId)
+      .query(
+        "SELECT * FROM Product WHERE rId = @rId AND (pCount >= 0 OR pCount IS NULL)"
+      );
+  }
+
   async getProductByPid(pId: string) {
     const pool = await this.getPool();
     return pool
@@ -29,19 +40,20 @@ export default class ProductModel extends BaseModel {
       .query("SELECT * FROM Product WHERE pId = @pId");
   }
 
-  async getProductByQuery(q?: string) {
+  async getProductByQuery(q?: string, rId?: string) {
     const pool = await this.getPool();
 
-    let query = "";
+    let query = "SELECT * FROM Product WHERE (pCount IS NULL OR pCount >= 0) ";
     let request = pool.request();
     if (q) {
       request.input("q", q);
-      query =
-        "SELECT * FROM Product WHERE pName LIKE '%' + @q + '%' AND (pCount IS NULL OR pCount >= 0)";
-    } else {
-      query = "SELECT * FROM Product WHERE pCount IS NULL OR pCount >= 0";
+      query += " AND pName LIKE '%' + @q + '%'";
     }
 
+    if (rId) {
+      request.input("rId", rId);
+      query += " AND rId = @rId";
+    }
     return request.query(query);
   }
 
@@ -51,5 +63,59 @@ export default class ProductModel extends BaseModel {
       .request()
       .input("category", sql.VarChar, category)
       .query("SELECT * FROM Product WHERE Category = @category");
+  }
+
+  async createProduct(
+    rId: string,
+    count: number,
+    unitPrice: string,
+    name: string,
+    filename?: string | null
+  ) {
+    const pool = await this.getPool();
+    const pId = randomUUID();
+    return pool
+      .request()
+      .input("pId", sql.Char, pId)
+      .input("count", sql.Int, count)
+      .input("unitPrice", sql.VarChar, unitPrice)
+      .input("name", sql.NVarChar, name)
+      .input("rId", sql.Char, rId)
+      .input("image", sql.Text, filename)
+      .query(
+        "INSERT INTO Product(pId, pCount, unitPrice, pName, rId, image) " +
+          "VALUES(@pId, @count, @unitPrice, @name, @rId, @image)"
+      );
+  }
+
+  async updateProduct(
+    pId: string,
+    rId: string,
+    count: number,
+    unitPrice: string,
+    name: string,
+    filename?: string | null
+  ) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("pId", sql.Char, pId)
+      .input("count", sql.Int, count)
+      .input("unitPrice", sql.VarChar, unitPrice)
+      .input("name", sql.NVarChar, name)
+      .input("rId", sql.Char, rId)
+      .input("image", sql.Text, filename)
+      .query(
+        "UPDATE Product SET pCount=@count, unitPrice=@unitPrice, pName=@name, image=@image WHERE pId=@pId AND rId=@rId"
+      );
+  }
+
+  async deleteProduct(pId: string, rId: string) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("pId", sql.Char, pId)
+      .input("rId", sql.Char, rId)
+      .query("UPDATE Product SET pCount = -2 WHERE pId = @pId AND rId = @rId");
   }
 }

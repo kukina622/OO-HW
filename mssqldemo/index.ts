@@ -672,6 +672,7 @@ app.get("/api/manager/product", authAPI, async (req, res) => {
   }
 });
 
+// OK
 app.get("/manager", authManager, async (req, res) => {
   try {
     const { rId } = req.session;
@@ -688,6 +689,7 @@ app.get("/manager", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.get("/manager/order", authManager, async (req, res) => {
   const rId = req.session.rId;
 
@@ -703,12 +705,13 @@ app.get("/manager/order", authManager, async (req, res) => {
       oDate: x.oDate.toISOString().split("T")[0]
     }));
 
-    res.render("manager/manager", { data, rId });
+    res.render("manager/order", { data, rId });
   } catch (err) {
     res.send("ERROR: " + err);
   }
 });
 
+// OK
 app.get("/manager/product/add", authManager, async (req, res) => {
   try {
     const rId = req.session.rId;
@@ -718,6 +721,7 @@ app.get("/manager/product/add", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.post("/manager/product/add", authManager, async (req, res) => {
   const { rId } = req.session;
   const body = req.body;
@@ -765,6 +769,7 @@ app.post("/manager/product/add", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.get("/manager/product/edit/:pId", authManager, async (req, res) => {
   try {
     const pool = await sql.connect(sqlConfig);
@@ -780,6 +785,7 @@ app.get("/manager/product/edit/:pId", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.post("/manager/product/edit", authManager, async (req, res) => {
   const body = req.body;
   const rId = req.session.rId;
@@ -825,6 +831,7 @@ app.post("/manager/product/edit", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.get("/manager/product/delete/:pId", authManager, async (req, res) => {
   const pId = req.params.pId;
   const rId = req.session.rId;
@@ -851,6 +858,7 @@ app.get("/manager/product/delete/:pId", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.get("/api/manager/order/detail/:oId", authManager, async (req, res) => {
   const oId = req.params.oId;
 
@@ -875,6 +883,7 @@ app.get("/api/manager/order/detail/:oId", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.get("/api/manager/order/complete/:oId", authManager, async (req, res) => {
   const oId = req.params.oId;
   try {
@@ -892,6 +901,7 @@ app.get("/api/manager/order/complete/:oId", authManager, async (req, res) => {
   }
 });
 
+// OK
 app.get("/api/manager/order/cancel/:oId", authManager, async (req, res) => {
   const oId = req.params.oId;
   try {

@@ -23,7 +23,7 @@ export default class MemberModel extends BaseModel {
       .input("email", sql.VarChar, username)
       .input("password", sql.VarChar, password)
       .query(
-        "SELECT rId FROM Manager WHERE mEmail = @email AND mPassword = @password"
+        "SELECT rId FROM Manager WHERE email = @email AND password = @password"
       );
   }
 

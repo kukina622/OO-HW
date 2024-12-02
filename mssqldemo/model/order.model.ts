@@ -3,6 +3,8 @@ import BaseModel from "./base.model";
 import sql from "mssql";
 import { randomUUID } from "crypto";
 
+type Status = "Pending" | "Confirmed" | "Completed" | "Cancelled" | "Preparing";
+
 @injectable()
 export default class OrderModel extends BaseModel {
   async getOrders(mId: string, status?: string) {
@@ -27,6 +29,37 @@ export default class OrderModel extends BaseModel {
       request.input("status", sql.NVarChar, status);
       query += " AND [Order].status = @status";
     }
+
+    return request.query(query);
+  }
+
+  async getOrdersWithoutCartByRid(rId: string) {
+    const pool = await this.getPool();
+
+    return pool.request().input("rId", sql.Char, rId).query(`
+      SELECT * FROM [Order]
+      INNER JOIN Member ON [Order].mId = Member.mEmail
+      WHERE [Order].rId = @rId
+    `);
+  }
+
+  async getOrderByOid(oId: string) {
+    const pool = await this.getPool();
+    let request = pool.request().input("oId", sql.VarChar, oId);
+
+    let query = `
+      SELECT 
+        [Order].*,
+        [Cart].count,
+        [Cart].unitPrice,
+        [Cart].price,
+        Product.pName,
+        Product.image
+      FROM [Order]
+      INNER JOIN Cart ON [Order].oId = [Cart].oId
+      LEFT JOIN Product ON [Cart].pId = Product.pId
+      WHERE [Order].oId = @oId
+    `;
 
     return request.query(query);
   }
@@ -108,5 +141,14 @@ export default class OrderModel extends BaseModel {
     await tx.commit();
 
     return { oId, totalPrice };
+  }
+
+  async updateOrderStatus(oId: string, status: Status) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("oId", oId)
+      .input("status", status)
+      .query(`UPDATE [Order] SET status = @status WHERE oId = @oId`);
   }
 }
