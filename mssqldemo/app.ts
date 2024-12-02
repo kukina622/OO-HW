@@ -5,8 +5,9 @@ import BaseController from "./controller/base.controller";
 import MemberController from "./controller/member.controller";
 import ProductController from "./controller/product.controller";
 import OrderController from "./controller/order.controller";
-import "./di/di-container";
 import ManagerController from "./controller/manager.controller";
+import CartController from "./controller/cart.controller";
+import "./di/di-container";
 
 const appInit = async () => {
   const app = express();
@@ -29,6 +30,7 @@ const appInit = async () => {
   const controllers: BaseController[] = [
     new MemberController(app),
     new ProductController(app),
+    new CartController(app),
     new OrderController(app),
     new ManagerController(app)
   ];
