@@ -1,8 +1,7 @@
 {
   "scripts": {
-    "start": "ts-node --transpile-only index.ts",
-    "mssql": "node_modules/.bin/mssql .mssql.json",
-    "start:mvc": "nodemon --transpile-only server.ts"
+    "start": "nodemon --transpile-only server.ts",
+    "mssql": "node_modules/.bin/mssql .mssql.json"
   },
   "dependencies": {
     "@types/ejs": "^3.1.5",
