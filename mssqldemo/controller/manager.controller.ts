@@ -32,12 +32,10 @@ export default class ManagerController extends BaseController {
 
     router.get("/api/manager/product", this.getProductsByQuery.bind(this));
 
-    router.get(
-      "/api/manager/order/complete/:oId",
-      this.completeOrder.bind(this)
+    router.post(
+      "/api/manager/order/status/:oId",
+      this.editOrderStatus.bind(this)
     );
-
-    router.get("/api/manager/order/cancel/:oId", this.cancelOrder.bind(this));
 
     this.router.use(router);
   }
@@ -191,23 +189,12 @@ export default class ManagerController extends BaseController {
     }
   }
 
-  private async completeOrder(req: Request, res: Response) {
+  private async editOrderStatus(req: Request, res: Response) {
     const oId = req.params.oId;
-    try {
-      const result = await this.orderModel.updateOrderStatus(oId, "Completed");
+    const { status } = req.body;
 
-      res.json({
-        result: result.rowsAffected[0] > 0 ? "ok" : "error"
-      });
-    } catch (err) {
-      res.json({ error: err });
-    }
-  }
-
-  private async cancelOrder(req: Request, res: Response) {
-    const oId = req.params.oId;
     try {
-      const result = await this.orderModel.updateOrderStatus(oId, "Cancelled");
+      const result = await this.orderModel.updateOrderStatus(oId, status);
 
       res.json({
         result: result.rowsAffected[0] > 0 ? "ok" : "error"

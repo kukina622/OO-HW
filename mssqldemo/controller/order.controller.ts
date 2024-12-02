@@ -34,7 +34,7 @@ export default class OrderController extends BaseController {
       authAPI,
       this.deleteProductFromCart.bind(this)
     );
-
+    this.router.get("/api/order/cancel/:oId", authAPI, this.memberCancelOrder.bind(this));
     this.router.get("/checkout", auth, this.checkout.bind(this));
   }
 
@@ -163,6 +163,39 @@ export default class OrderController extends BaseController {
         message: "結帳失敗",
         errorType: "checkoutError"
       });
+    }
+  }
+
+  private async memberCancelOrder(req: Request, res: Response) {
+    const oId = req.params.oId;
+    const mId = req.session.user as string;
+    try {
+      const order = await this.orderModel.getOrderByOid(oId);
+
+      if (order.recordset.length === 0) {
+        res.json({ result: "error", error: "Order not found" });
+        return;
+      }
+
+      if (order.recordset[0].mId !== mId) {
+        res.json({ result: "error", error: "Permission denied" });
+        return;
+      }
+
+      const status = order.recordset[0].status;
+      console.log(status);
+      
+      if (status !== "Pending" && status !== "Preparing") {
+        res.json({ result: "error", error: "Invalid status" });
+        return;
+      }
+
+      const result = await this.orderModel.updateOrderStatus(oId, "Cancelled");
+      res.json({
+        result: result.rowsAffected[0] > 0 ? "ok" : "error"
+      });
+    } catch (err) {
+      res.json({ result: "error", error: err});
     }
   }
 }

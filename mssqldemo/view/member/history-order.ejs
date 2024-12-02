@@ -11,6 +11,7 @@
   integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
     tailwind.config = {
       blocklist: [
@@ -66,19 +67,28 @@
             <span>日期: {{ order.oDate }}</span>
             <span>總計: ${{ order.total.toFixed(2) }}</span>
           </div>
-          <button 
-            class="flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"
-            @click.stop="order.expanded = !order.expanded"
-          >
-            <template v-if="!order.expanded">
-              <i class="fas fa-chevron-down"></i>
-              <span class="ml-2">顯示詳情
-            </template>
-            <template v-else>
-              <i class="fas fa-chevron-up"></i>
-              <span class="ml-2">隱藏詳情
-            </template>
-          </button>
+          <div class="flex justify-between">
+            <button 
+              class="flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"
+              @click.stop="order.expanded = !order.expanded"
+            >
+              <template v-if="!order.expanded">
+                <i class="fas fa-chevron-down"></i>
+                <span class="ml-2">顯示詳情
+              </template>
+              <template v-else>
+                <i class="fas fa-chevron-up"></i>
+                <span class="ml-2">隱藏詳情
+              </template>
+            </button>
+            <button 
+              v-if="showCancelOrderButton(order)"
+              class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-200"
+              @click.stop="onCancelOrder(order)"
+            >
+              取消訂單
+            </button>
+          </div>
         </div>
         <div class="px-6 pb-6" v-if="order.expanded" @click.stop>
           <div class="overflow-x-auto">
@@ -156,6 +166,28 @@
           }))
         } catch (error) {
           alert('無法取得訂單資料')
+        }
+      },
+      showCancelOrderButton(order) {
+        return order.status === 'Pending' || order.status === 'Preparing'
+      },
+
+      async onCancelOrder(order) {
+        try {
+          if (!confirm("確定要取消訂單嗎，此動作無法取消?")) {
+            return
+          }
+
+          const { data } = await axios.get(`/api/order/cancel/${order.oId}`)
+          if (data.result !== 'ok') {
+            alert(data.error || "無法取消訂單")
+            return
+          }
+          
+          alert("訂單已取消")
+          this.fetchOrders()
+        } catch (error) {
+          alert("無法取消訂單")
         }
       }
     },

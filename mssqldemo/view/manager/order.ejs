@@ -9,7 +9,10 @@
     integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.2/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+  <title>訂單管理</title>
   <style>
     #detail-total-price {
       padding-right: .5rem;
@@ -17,24 +20,10 @@
   </style>
 </head>
 
-<%
-var getStatusName = function(status) {
-  const mapping = {
-    'Pending': '待處理',
-    'Preparing': '準備中',
-    'Shipped': '已出貨',
-    'Completed': '已完成',
-    'Cancelled': '已取消'
-  };
-
-  return mapping[status];
-}
-%>
-
 
 <body>
   <%-include('../template/_nav_manager', {action: 'restaurant' })%>
-  <div class="container">
+  <div class="container" id="app">
     <div class="row mt-4">
       <table class="table table-hover table-bordered">
         <thead>
@@ -48,54 +37,60 @@ var getStatusName = function(status) {
             <th width="20%"></th>
           </tr>
         </thead>
-        <!-- data area -->
         <tbody id="restaurant-data-area">
-          <% for (const item of data) { %>
-            <tr>
-              <td class="text-center">
-                <%= item.oId.slice(0, 8) %> -***
-              </td>
-              <td>
-                <%= item.mEmail %>
-              </td>
-              <td>
-                <%= item.mName %>
-              </td>
-              <td class="text-end">
-                $<%= item.total %>
-              </td>
-              <td class="text-center">
-                <%= item.oDate %>
-              </td>
-              <td class="text-center">
-                <%= getStatusName(item.status) %>
-              </td>
-              <td class="text-center">
-                <button 
-                  onclick="showOrderDetail('<%=item.oId%>')"
-                  class="btn btn-sm btn-outline-secondary" 
-                  data-bs-toggle="modal" 
-                  data-bs-target="#order-detail"
+          <tr v-for="order in orders">
+            <td class="text-center">
+              {{ order.oId.slice(0, 8) }}
+            </td>
+            <td>
+              {{ order.mEmail }}
+            </td>
+            <td>
+              {{ order.mName }}
+            </td>
+            <td class="text-end">
+              {{ order.total }}
+            </td>
+            <td class="text-center">
+              {{ order.oDate }}
+            </td>
+            <td class="text-center">
+              <span v-if="!order.isEditStatus">
+                {{ statusMapping[order.status] }}
+              </span>
+              <select 
+                v-else
+                v-model="order.newStatus" 
+              >
+                <option 
+                  v-for="status in allowStatus(order.status)" 
+                  :key="status" 
+                  :value="status" 
                 >
-                  詳細資料
-                </button>
-                <button 
-                  onclick="orderDone('<%=item.oId%>')" 
-                  class="btn btn-sm btn-outline-success"
-                  <%= item.status === "Completed" ? "disabled" : "" %>
-                >
-                  完成訂單
-                </button>
-                <button 
-                  onclick="orderCancel('<%=item.oId%>')" 
-                  class="btn btn-sm btn-outline-danger"
-                  <%= item.status === "Cancelled" ? "disabled" : "" %>
-                >
-                  取消訂單
-                </button>
-              </td>
-            </tr>
-            <% } %>
+                  {{ statusMapping[status] }}
+                </option>
+              </select>
+            </td>
+            <td class="text-center">
+              <button 
+                @click="showOrderDetail(order.oId)" 
+                class="btn btn-sm btn-outline-secondary"
+                data-bs-toggle="modal" 
+                data-bs-target="#order-detail"
+              >
+                詳細資料
+              </button>
+              <button 
+                @click="onStatusChangeClick(order)"
+                class="btn btn-sm"
+                :class="order.isEditStatus ? 'btn-danger' : 'btn-outline-success'"
+              >
+              {{ 
+                order.isEditStatus ? order.status === order.newStatus ? '取消編輯' :'儲存訂單狀態' : '編輯訂單狀態' 
+              }}
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -129,66 +124,112 @@ var getStatusName = function(status) {
     integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
     crossorigin="anonymous"></script>
   <script>
-    const showOrderDetail = async (oId) => {
-      const url = `/api/manager/order/detail/${oId}`
-      const res = await fetch(url)
-      const json = await res.json()
-      console.log(json)
+    const ssrData = `<%- JSON.stringify(data) %>`
+    const app = new Vue({
+      el: '#app',
+      data() {
+        return {
+          orders: [],
+          statusMapping: {
+            'Pending': '待處理',
+            'Preparing': '準備中',
+            'Shipped': '出貨',
+            'Completed': '完成訂單',
+            'Cancelled': '取消訂單'
+          }
+        }
+      },
+      methods: {
+        async showOrderDetail(oId) {
+          const url = `/api/manager/order/detail/${oId}`
+          const res = await fetch(url)
+          const json = await res.json()
+          this.createModal(json)
+        },
+        createModal(cart) {
+          var html = ''
+          let total = 0
+          for (const item of cart) {
+            total += item.price
+            html += this.renderCartRow(item)
+          }
+          document.querySelector("#detail-total-price").textContent = `總金額：$${total}`
+          document.getElementById('order-detail-data-area').innerHTML = html
+        },
+        renderCartRow(item) {
+          return `
+            <tr id="cart-item-${item.cTime}">
+              <td>${item.pName}</td>
+              <td class="text-end">$${item.unitPrice}</td>
+              <td class="text-end">${item.count}</td>
+              <td class="text-end">$${item.price}</td>
+            </tr>
+          `
+        },
+        allowStatus(status) {
+          const allStatus = ['Pending', 'Preparing', 'Shipped', 'Completed', 'Cancelled']
+          let _allowStatus = allStatus
 
-      createModal(json)
-    }
+          if (status === 'Cancelled' || status === 'Completed') _allowStatus = []
 
-    const createModal = (cart) => {
-      var html = ''
-      let total = 0
-      for (const item of cart) {
-        total += item.price
-        html += renderCartRow(item)
+          if (status === 'Shipped') {
+            _allowStatus = ["Completed", "Cancelled"]
+          }
+
+          if (status === 'Pending' || status === 'Preparing') {
+            _allowStatus = allStatus
+          }
+
+          _allowStatus.push(status)
+
+          return Array.from(new Set(_allowStatus))
+        },
+        async onStatusChangeClick(order) {
+          try {          
+            if (!order.isEditStatus) {
+              order.isEditStatus = true
+              return
+            } 
+
+            if (order.status === order.newStatus) {
+              order.isEditStatus = false
+              return
+            }
+
+            if (order.newStatus === 'Cancelled') {
+              if (!confirm('確定要取消訂單嗎，取消後便無法就修改訂單？')) return
+            }
+
+            if (order.newStatus === 'Completed') {
+              if (!confirm('完成訂單後便無法就修改')) return
+            }
+
+            const { data } = await axios.post(`/api/manager/order/status/${order.oId}`, {
+              status: order.newStatus
+            })
+
+            if (data.result !== 'ok') {
+              alert('修改失敗')
+              return
+            }
+            alert('修改成功')
+            order.status = order.newStatus
+            order.isEditStatus = false
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      },
+      created() {
+        this.orders = JSON.parse(ssrData)
+        this.orders = this.orders.map(order => ({
+          ...order,
+          isEditStatus: false,
+          newStatus: order.status
+        }))
       }
-      document.querySelector("#detail-total-price").textContent = `總金額：$${total}`
-      document.getElementById('order-detail-data-area').innerHTML = html
-    }
+    })
 
-    const renderCartRow = (item) => {
-      return `
-        <tr id="cart-item-${item.cTime}">
-          <td>${item.pName}</td>
-          <td class="text-end">$${item.unitPrice}</td>
-          <td class="text-end">${item.count}</td>
-          <td class="text-end">$${item.price}</td>
-        </tr>
-      `
-    }
-
-    const orderDone = async (oId) => {
-      const url = `/api/manager/order/complete/${oId}`
-      const res = await fetch(url)
-      const json = await res.json()
-
-      console.log(json)
-      
-      if (json.result === 'ok') {
-        alert('完成訂單！')
-        window.location.reload()
-      } else {
-        alert('操作失敗，請再試一次。')
-      }
-    }
-
-    const orderCancel = async (oId) => {
-      const url = `/api/manager/order/cancel/${oId}`
-      const res = await fetch(url)
-      const json = await res.json()
-
-      console.log(json)
-      
-      if (json.result === 'ok') {
-        alert('取消訂單成功！')
-        window.location.reload()
-      } else {
-        alert('操作失敗，請再試一次。')
-      }
-    }
   </script>
 </body>
 
