@@ -95,7 +95,7 @@ export default class OrderModel extends BaseModel {
     let totalPrice = 0;
     for (let index = 0; index < carts.recordset.length; index++) {
       const cart = carts.recordset[index];
-      if (cart.count > cart.pCount) {
+      if (cart.pCount !== null && cart.count > cart.pCount) {
         await tx.rollback();
         return Promise.reject("Not enough product");
       }
