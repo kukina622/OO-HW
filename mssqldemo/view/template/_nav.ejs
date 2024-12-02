@@ -1,4 +1,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+
+<%- include('cart') %>
+
 <nav class="navbar sticky-top navbar-light bg-light navbar-expand-md">
   <div class="container">
     <a class="navbar-brand" href="#">飾在必行</a>
@@ -83,6 +86,7 @@
       </div>
     </div>
   </div>
+
   <script>
     const action = '<%=action%>'
     const options = {
@@ -107,42 +111,6 @@
       render(json)
     }
 
-    const submit = () => {
-      window.location = '/checkout'
-    }
-
-    const deleteCart = async (cTime, price) => {
-      const res = await fetch(`/api/cart/delete/${cTime}`)
-      const json = await res.json()
-
-      if (json.result === 'ok') {
-        total -= price
-        document.getElementById(`cart-item-${cTime}`).innerHTML = ''
-        document.getElementById('total').innerHTML = '$' + total
-        if (total == 0) {
-          document.getElementById('checkout').disabled = true
-        }
-      }
-    }
-
-    const getCart = async () => {
-      let checkoutButton = document.getElementById('checkout')
-
-      const url = `/api/cart`
-      const res = await fetch(url, options)
-      const json = await res.json()
-      console.log(json)
-      const cart = json.cart
-      var html = ''
-      for (const item of cart) {
-        html += renderRow(item)
-      }
-      document.getElementById('data-area').innerHTML = html
-      document.getElementById('total').innerHTML = '$' + json.total
-      total = json.total
-
-      checkoutButton.disabled = (total == 0)
-    }
 
     const renderRow = (item) => {
       return `
@@ -176,37 +144,3 @@
 
   </script>
 </nav>
-
-<!-- Modal -->
-
-<div id="list" class="modal fade" aria-hidden="true" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"> 購物車</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-border">
-          <thead>
-            <tr>
-              <th>產品名稱</th>
-              <th class="text-right">單價</th>
-              <th class="text-right">數量</th>
-              <th class="text-right">總計</th>
-              <th>刪除</th>
-            </tr>
-          </thead>
-          <tbody id="data-area">
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <h6 align="left" style="color: crimson;">*結帳前請確認住址是否正確，我們將以住址為送貨地址，若需修改請至會員資料進行修改，謝謝！*</h6>
-        <br>
-        <p id="total"></p>
-        <button id="checkout" onclick="submit()" class="btn btn-outline-primary">結帳</button>
-      </div>
-    </div>
-  </div>
-</div>
