@@ -8,40 +8,77 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.2/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="/public/css/login.css" type="text/css">
+  <!-- <link rel="stylesheet" href="/public/css/login.css" type="text/css"> -->
   <title>飾在必行</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      blocklist: [
+        "container",
+      ]
+    }
+  </script>
+
 </head>
 
-<body class="text-center">
-  <main class="form-signin">
-    <form method="post">
-      <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
-
-      <div class="form-floating">
-        <input type="text" class="form-control" name="email" id="floatingInput" placeholder="name@example.com" name="email">
-        <label for="floatingInput">Email address</label>
+<body>
+  <div class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-semibold text-gray-800">飾在必行</h1>
       </div>
-      <div class="form-floating">
-        <input type="password" class="form-control" name="password" id="floatingPassword" placeholder="Password" name="password">
-        <label for="floatingPassword">Password</label>
-      </div>
-      <% if (typeof(loginSuccess)=='boolean' && !loginSuccess) { %>
-        <div class="alert alert-danger" role="alert">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-            class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-            <path
-              d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
-          </svg>
+      
+      <div class="bg-white shadow-md rounded-lg p-8 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-300 via-gray-400 to-gray-300"></div>
+        
+        <h2 class="text-xl font-medium text-gray-800 mb-6">會員登入</h2>
+        
+        <form class="space-y-4" method="post">
           <div>
-            Wrong username or password
+            <label htmlFor="email" class="block text-sm font-medium text-gray-700">電子郵件</label>
+            <input 
+              type="email" 
+              id="email"
+              name="email"
+              placeholder="Email"
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
+              focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+            />
           </div>
-
+          
+          <div>
+            <label htmlFor="password" class="block text-sm font-medium text-gray-700">密碼</label>
+            <input 
+              type="password" 
+              id="password" 
+              name="password"
+              placeholder="••••••••" 
+              class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
+              focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+            />
+          </div>
+          
+          <button 
+            type="submit"
+            class="w-full bg-gray-700 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-200"
+          >
+            登入
+          </button>
+        </form>
+        <div class="mt-4 text-center">
+          <% if (typeof(loginSuccess)=='boolean' && !loginSuccess) { %> 
+            <p class="text-sm text-red-500">帳號或密碼錯誤</p>
+          <% } %>
         </div>
-        <% } %>
-          <button id="submit" class="w-100 btn btn-lg btn-outline-primary mt-4" type="submit">Sign in</button>
-          <a href="/register" class="btn btn-secondary mt-5">Register</a>
-    </form>
-  </main>
+      </div>
+      
+      <div class="mt-6 text-center">
+        <p class="text-sm text-gray-600">
+          還沒有帳號？ <a href="/register" class="text-gray-800 hover:underline">立即註冊</a>
+        </p>
+      </div>
+    </div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
     crossorigin="anonymous"></script>
