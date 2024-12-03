@@ -17,6 +17,12 @@
     #detail-total-price {
       padding-right: .5rem;
     }
+    .button-block > * {
+      margin-bottom: 10px;
+    }
+    td {
+      vertical-align: middle;
+    }
   </style>
 </head>
 
@@ -71,7 +77,7 @@
                 </option>
               </select>
             </td>
-            <td class="text-center">
+            <td class="text-center button-block">
               <button 
                 @click="showOrderDetail(order.oId)" 
                 class="btn btn-sm btn-outline-secondary"
@@ -80,15 +86,41 @@
               >
                 詳細資料
               </button>
-              <button 
-                @click="onStatusChangeClick(order)"
-                class="btn btn-sm"
-                :class="order.isEditStatus ? 'btn-danger' : 'btn-outline-success'"
-              >
-              {{ 
-                order.isEditStatus ? order.status === order.newStatus ? '取消編輯' :'儲存訂單狀態' : '編輯訂單狀態' 
-              }}
-              </button>
+              <template v-if="!isDisabledEditStatus(order)">
+                <template v-if="order.isEditStatus">
+                  <button 
+                    class="btn btn-sm btn-success"
+                    @click="onStatusChangeClick(order)"
+                  >
+                    儲存訂單狀態
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-danger"
+                    @click="order.isEditStatus = false"
+                  >
+                    取消編輯
+                  </button>
+                </template>
+                <button 
+                  v-else
+                  class="btn btn-sm btn-warning"
+                  @click="order.isEditStatus = true"
+                >
+                  編輯訂單狀態
+                </button>
+                <button 
+                  @click="onCancelButtonClick(order)"
+                  class="btn btn-sm btn-outline-danger"
+                >
+                  取消訂單
+                </button>
+                <button 
+                  @click="onCompleteButtonClick(order)"
+                  class="btn btn-sm btn-outline-success"
+                >
+                  完成訂單
+                </button>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -167,13 +199,13 @@
           `
         },
         allowStatus(status) {
-          const allStatus = ['Pending', 'Preparing', 'Shipped', 'Completed', 'Cancelled']
+          const allStatus = ['Pending', 'Preparing', 'Shipped']
           let _allowStatus = allStatus
 
           if (status === 'Cancelled' || status === 'Completed') _allowStatus = []
 
           if (status === 'Shipped') {
-            _allowStatus = ["Completed", "Cancelled"]
+            _allowStatus = []
           }
 
           if (status === 'Pending' || status === 'Preparing') {
@@ -184,26 +216,8 @@
 
           return Array.from(new Set(_allowStatus))
         },
-        async onStatusChangeClick(order) {
-          try {          
-            if (!order.isEditStatus) {
-              order.isEditStatus = true
-              return
-            } 
-
-            if (order.status === order.newStatus) {
-              order.isEditStatus = false
-              return
-            }
-
-            if (order.newStatus === 'Cancelled') {
-              if (!confirm('確定要取消訂單嗎，取消後便無法就修改訂單？')) return
-            }
-
-            if (order.newStatus === 'Completed') {
-              if (!confirm('完成訂單後便無法就修改')) return
-            }
-
+        async saveStatus(order) {
+          try {
             const { data } = await axios.post(`/api/manager/order/status/${order.oId}`, {
               status: order.newStatus
             })
@@ -214,10 +228,34 @@
             }
             alert('修改成功')
             order.status = order.newStatus
-            order.isEditStatus = false
           } catch (error) {
-            console.log(error);
+            alert('修改失敗')
           }
+        },
+        async onCancelButtonClick(order) {
+          if (!confirm('確定要取消訂單嗎，取消後便無法就修改訂單？')) return
+          order.newStatus = 'Cancelled'
+          await this.saveStatus(order)
+          order.isEditStatus = false
+        },
+        async onCompleteButtonClick(order) {
+          if (!confirm('完成訂單後便無法就修改')) return
+          order.newStatus = 'Completed'
+          await this.saveStatus(order)
+          order.isEditStatus = false
+        },
+        async onStatusChangeClick(order) {
+          if (order.status === order.newStatus) {
+            order.isEditStatus = false
+            return
+          }
+          await this.saveStatus(order)
+          order.isEditStatus = false
+        },
+        isDisabledEditStatus(order) {
+          if (order.status === 'Cancelled' || order.status === 'Completed') return true
+
+          return false
         }
       },
       created() {
