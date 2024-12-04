@@ -93,9 +93,17 @@
 <script>
   async function addToCart(pId) {
     const countInput = document.getElementById(`count-${pId}`)
-    const count = countInput.value
-    if (count === '') {
+    const count = parseInt(countInput.value)
+
+    if (count <= 0) {
       alert('請輸入數量')
+      countInput.value = ''
+      return
+    }
+
+    if (isNaN(count)) {
+      alert('請輸入數字')
+      countInput.value = ''
       return
     }
 
