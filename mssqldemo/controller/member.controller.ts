@@ -136,7 +136,14 @@ export default class MemberController extends BaseController {
   }
 
   private async emailValidation(req: Request, res: Response) {
+    const re =
+      /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
     const { email } = req.params;
+    if (!email.toLowerCase().match(re)) {
+      res.json({ result: "invalid-email" });
+      return;
+    }
+    
     const members = await this.memberModel.getMemberByEmail(email);
     if (members.recordset.length > 0) {
       res.json({ result: "account-existed" });

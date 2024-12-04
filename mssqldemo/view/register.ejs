@@ -47,7 +47,7 @@
             </button>
           </div>
           <div class="text-red-500 text-sm mt-2 ml-1" v-if="checker.email">
-            此Email已被註冊
+            此Email已被註冊/無效
           </div>
           <div class="text-green-500 text-sm mt-2 ml-1" v-else-if="emailAvailable">
             此Email可使用
@@ -144,6 +144,10 @@
       },
       methods: {
         async checkUsernameIsValid() {
+          if (this.email.trim().length === 0) {
+            this.checker.email = true
+            return
+          }
           const options = {
             credentials: "include"
           }
@@ -188,7 +192,7 @@
             return
           }
 
-          if (json.result === 'account-existed') {
+          if (json.result === 'account-existed' || json.result === 'invalid-email') {
             this.checker.email = true
             this.emailAvailable = false
             return
