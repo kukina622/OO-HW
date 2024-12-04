@@ -100,17 +100,17 @@ export default class OrderModel extends BaseModel {
       //   return Promise.reject("Not enough product");
       // }
 
-      const result = await tx
-        .request()
-        .input("count", sql.Int, cart.count)
-        .input("pId", sql.VarChar, cart.pId).query(`
-          UPDATE Product SET pCount = pCount - @count WHERE pId = @pId
-        `);
+      // const result = await tx
+      //   .request()
+      //   .input("count", sql.Int, cart.count)
+      //   .input("pId", sql.VarChar, cart.pId).query(`
+      //     UPDATE Product SET pCount =  WHERE pId = @pId
+      //   `);
 
-      if (result.rowsAffected[0] !== 1) {
-        await tx.rollback();
-        return Promise.reject("Update product failed");
-      }
+      // if (result.rowsAffected[0] !== 1) {
+      //   await tx.rollback();
+      //   return Promise.reject("Update product failed");
+      // }
 
       totalPrice += cart.price;
     }
