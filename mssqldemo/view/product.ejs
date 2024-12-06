@@ -5,11 +5,23 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="canonical" href="https://getbootstrap.com/docs/5.2/examples/masonry/">
+  <!-- <link rel="canonical" href="https://getbootstrap.com/docs/5.2/examples/masonry/"> -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.2/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      blocklist: [
+        "container",
+        "collapse"
+      ],
+      prefix: 'tw-',
+    }
+  </script>
   <style>
     .card {
       margin-bottom: 20px;
@@ -29,6 +41,24 @@
       overflow: hidden;
       aspect-ratio: 214 / 144
     }
+
+    .list-enter-active, .list-leave-active {
+      transition: all 1s;
+    }
+
+    .list-enter, .list-leave-to {
+      opacity: 0;
+    }
+
+    .list-leave-to {
+      display: none;
+    }
+
+    .list-leave, .list-enter-to {
+      opacity: 1;
+    }
+
+
   </style>
   <title>產品</title>
   <% if (typeof errorType !== 'undefined'){%>
@@ -41,47 +71,52 @@
 
 <body>
   <%- include('template/_nav', {action: 'product'}) %> 
-  <div class="container">
-      <br class="my-5">
-      <br class="my-5">
-      <br class="my-5">
-
-      <div id="data-area" class="row grid" data-masonry='{ "percentPosition": true, "itemSelector": ".grid-item" }'>
-        <% for(var item of data) { %>
-          <div
-            class="grid-item col-12 col-offset-12 col-sm-6 col-sm-offset-6 col-md-4 col-md-offset-4 col-lg-3 col-lg-offset-3">
-            <div class="card">
-              <div class="img-wrapper">
-                <img 
-                  src="<%= item.image ? `/upload/${item.image}` :'/public/assets/placeholder.jpg' %>" 
-                  class="card-img-top"
-                >
-              </div>
-              <div class="card-body">
-                <h5 class="card-title">
-                  <%=item.pName%>
-                </h5>
-                <p class="card-text">
-                  <b>$<%=item.unitPrice%></b>
-                </p>
-                <div class="input-group">
-                  <input id="count-<%=item.pId%>" type="number" min="1" class="form-control" placeholder="購買數量" aria-label="Recipient's username" aria-describedby="button-addon2">
-                  <button onclick="addToCart('<%=item.pId%>')" class="btn btn-sm btn-outline-secondary" type="button" id="button-addon2">加入</button>
-                </div>
-
-                <!-- <label for="count-<%=item.pId%>">購買數量</label>
-                <input type="number" class="form-control" name="count-<%=item.pId%>" id="count-<%=item.pId%>">
-
-                <br>
-                <div>
-                  <button onclick="addToCart(this, '<%=item.pId%>')" class="btn btn-primary">Add to cart</button>
-                </div>
-                <span></span> -->
-              </div>
-            </div>
+  <div class="container tw-mx-auto tw-px-4 tw-py-8" id="app">
+    <transition-group 
+      name="list" 
+      tag="div" 
+      class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-8 transition"
+    >
+      <div 
+        v-for="(product, index) in products"
+        class="tw-bg-white tw-rounded-lg tw-shadow-md tw-overflow-hidden"
+        :key="product.pId + filterKey"
+      >
+        <div class="img-wrapper">
+          <img class="card-img-top" :src="getImageSrc(product.image)">
+        </div>
+        <div class="tw-p-4">
+          <div>
+            <h2 class="tw-text-lg tw-font-semibold tw-mb-2">{{ product.pName || "&nbsp;" }}</h2>
+            <p class="tw-text-xl tw-font-bold tw-text-gray-700">${{ product.unitPrice }}</p>
           </div>
-          <% } %>
+          <div class="tw-flex tw-items-center tw-mt-4 tw-space-x-2">
+            <input
+              v-model="product.buyCount"
+              type="number"
+              min="1"
+              value="1"
+              class="tw-w-[30%] tw-border tw-border-gray-300 tw-rounded-md tw-px-2 tw-py-2 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-gray-400"
+            />
+            <button 
+              @click="addToCart(product)"
+              class="tw-flex-grow tw-text-white tw-px-4 tw-py-2 tw-rounded-md focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-gray-400 focus:tw-ring-offset-2 tw-transition-all tw-duration-200"
+              :class="product.isAdded ? 'tw-bg-green-500 hover:tw-bg-green-600 tw-border-green-800' : 'tw-bg-gray-800 hover:tw-bg-gray-700 tw-border-gray-800'"
+              :disabled="product.isAdded"
+            >
+              <template v-if="product.isAdded">
+                <i class="bi bi-cart-check-fill tw-mr-2"></i>
+                加入成功
+              </template>
+              <template v-else>
+                <i class="bi bi-cart-fill tw-mr-2 "></i>
+                加入購物車  
+              </template>
+            </button>
+          </div>
+        </div>
       </div>
+    </transition-group>
   </div>
 </body>
 
@@ -91,97 +126,76 @@
 <script async="" src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
   integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"></script>
 <script>
-  async function addToCart(pId) {
-    const countInput = document.getElementById(`count-${pId}`)
-    const count = parseInt(countInput.value)
+  const ssrData = `<%- JSON.stringify(data) %>`
+  const app = new Vue({
+    el: '#app',
+    data: {
+      products: [],
+      filterKey: '',
+    },
+    methods: {
+      getImageSrc(image) {
+        return image ? `/upload/${image}` :'/public/assets/placeholder.jpg'
+      },
+      async addToCart(product) {
+        try {
+          const buyCount = parseInt(product.buyCount)
+          const pId = product.pId
 
-    if (count <= 0) {
-      alert('請輸入大於1的數字')
-      countInput.value = ''
-      return
-    }
+          if (buyCount <= 0) {
+            alert('請輸入大於1的數字')
+            product.buyCount = 1
+            return
+          }
 
-    if (isNaN(count)) {
-      alert('請輸入數字')
-      countInput.value = ''
-      return
-    }
+          if (isNaN(buyCount)) {
+            alert('請輸入數字')
+            product.buyCount = 1
+            return
+          }
 
-    const url = `/api/cart/add/${pId}/${count}`
-    console.log(url)
-    const res = await fetch(url, options)
-    const json = await res.json()
-    console.log(json)
-    if (json.result === 'ok') {
-      countInput.className = 'form-control is-valid'
-      setTimeout(() => {
-        countInput.className = 'form-control'
-      }, 2000)
-    } else {
-      countInput.className = 'form-control is-invalid'
-      if (json.error) {
-        alert(json.error)
+          const url = `/api/cart/add/${pId}/${buyCount}`
+          const res = await fetch(url, options)
+          const json = await res.json()
+          if (json.result === 'ok') {
+            product.isAdded = true
+            product.buyCount = 1
+            return
+          } 
+          
+          if (json.error) {
+            alert(json.error || '發生錯誤')
+          }
+        } catch (error) {
+          
+        } finally {
+          setTimeout(() => {
+            product.isAdded = false
+          }, 2000)
+        }
+      },
+      setProductsWithAnime(products) {
+        this.filterKey = Math.random().toString()
+        this.products = products.map(product => ({
+          ...product,
+          buyCount: 1,
+          isAdded: false
+        }))
       }
-    }
-  }
-</script>
-<script>
+    },
+    mounted() {
+      this.products = JSON.parse(ssrData)
+      this.products = this.products.map(product => ({
+        ...product,
+        buyCount: 1,
+        isAdded: false
+      }))
+    },
+  })
 
   const render = (json) => {
-    var $grid = $('.grid').masonry({
-      itemSelector: '.grid-item',
-      columnWidth: '.grid-item',
-      stagger: 100,
-      gutter: 0,
-      percentPosition: true
-    })
-
-    var $items = $('.grid-item')
-    $grid.masonry('remove', $items)
-      .masonry('layout')
-
-    const html = json.map(renderCard).join('')
-
-    var $items = $(html)
-    $grid.append($items)
-      .masonry('appended', $items)
-
-  }
-
-  const renderCard = (item) => {
-    return `
-    <div class="grid-item col-12 col-offset-12 col-sm-6 col-sm-offset-6 col-md-4 col-md-offset-4 col-lg-3 col-lg-offset-3">
-      <div class="card">
-        <div class="img-wrapper">
-          <img src="${item.image ? `/upload/${item.image}` :'/public/assets/placeholder.jpg'}" class="card-img-top">
-        </div>
-        <div class="card-body">
-          <h5 class="card-title">${item.pName}</h5>
-          <p class="card-text"><b>$${item.unitPrice}</b></p>
-          <div class="input-group">
-            <input id="count-${item.pId}" type="number" min="0" class="form-control" placeholder="購買數量" aria-label="Recipient's username" aria-describedby="button-addon2">
-            <button onclick="addToCart(this, '${item.pId}')" class="btn btn-sm btn-outline-secondary" type="button" id="button-addon2">加入</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    `
+    app.setProductsWithAnime(json)
   }
 </script>
-<!-- <script>
-  setTimeout(function () {
-    var $grid = $('.row').masonry({
-      itemSelector: 'none',
-      columnWidth: '.grid-item',
-      stagger: 100,
-    });
-    // reset itemSelector
-    $grid.masonry('option', {
-      itemSelector: '.grid-item'
-    });
-    var $items = $grid.find('.grid-item');
-    $grid.masonry('appended', $items);
-  }, 1000)
-</script> -->
 
 </html>
