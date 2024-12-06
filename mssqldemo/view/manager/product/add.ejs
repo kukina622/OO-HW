@@ -8,7 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.2/font/bootstrap-icons.css">
-  <title>新增餐點</title>
+  <title>新增商品</title>
   <style>
     .bd-placeholder-img {
       font-size: 1.125rem;
@@ -25,20 +25,23 @@
     }
   </style>
 
-<!-- Custom styles for this template -->
+  <!-- Custom styles for this template -->
 </head>
+
 <body class="bg-light">
   <div class="container">
     <div class="card mx-auto mt-4" style="width: 30rem;">
       <div class="card-header">
-        <h5 class="card-title my-1">新增餐點</h5>
+        <h5 class="card-title my-1">新增商品</h5>
       </div>
       <div class="card-body">
-        <form action="/manager/product/add" method="POST" class="needs-validation" novalidate encType="multipart/form-data">
+        <form action="/manager/product/add" method="POST" class="needs-validation" novalidate
+          encType="multipart/form-data">
           <div class="row">
             <div class="col-sm-12 mb-3">
               <label for="pName" class="form-label">名稱</label>
-              <input type="text" class="form-control" name="name" id="name" placeholder="請輸入餐點名稱" value="<%=data.name%>" required>
+              <input type="text" class="form-control" name="name" id="name" placeholder="請輸入商品名稱" value="<%=data.name%>"
+                required>
               <div class="invalid-feedback">
                 Valid name is required.
               </div>
@@ -54,7 +57,8 @@
 
             <div class="col-sm-12 mb-4">
               <label for="unitPrice" class="form-label">單價</label>
-              <input type="number" class="form-control" name="unitPrice" id="unitPrice" placeholder="請輸入餐點單價" value="<%=data.unitPrice%>" required>
+              <input type="number" class="form-control" name="unitPrice" id="unitPrice" placeholder="請輸入商品單價"
+                value="<%=data.unitPrice%>" required>
               <div class="invalid-feedback">
                 Valid last name is required.
               </div>
@@ -86,8 +90,8 @@
   <br>
   <br>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
-  integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
-  crossorigin="anonymous"></script>
+    integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
+    crossorigin="anonymous"></script>
   <script>
     document.querySelector("#image").addEventListener("change", (e) => {
       const file = e.target.files[0]
@@ -102,6 +106,7 @@
     })
   </script>
 </body>
+
 </html>
 <!--
   <form>
