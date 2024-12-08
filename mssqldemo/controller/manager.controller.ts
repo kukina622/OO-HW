@@ -74,8 +74,13 @@ export default class ManagerController extends BaseController {
 
   private async addProduct(req: Request, res: Response) {
     const { rId } = req.session;
-    const { unitPrice, count, name } = req.body;
+    const { unitPrice, count, name, category } = req.body;
     const _count = count == "" ? null : count;
+
+    if (!name || !unitPrice || !rId) {
+      res.redirect("/manager");
+      return;
+    }
 
     const image = req.files?.image;
     let filename = null;
@@ -97,6 +102,7 @@ export default class ManagerController extends BaseController {
         _count,
         unitPrice,
         name,
+        category,
         filename
       );
 
@@ -122,7 +128,7 @@ export default class ManagerController extends BaseController {
 
   private async editProduct(req: Request, res: Response) {
     const rId = req.session.rId as string;
-    const { unitPrice, count, name, pId } = req.body;
+    const { unitPrice, count, name, pId, category } = req.body;
     const _count = count == "" ? null : count;
 
     const image = req?.files?.image;
@@ -146,6 +152,7 @@ export default class ManagerController extends BaseController {
         _count,
         unitPrice,
         name,
+        category,
         filename
       );
 

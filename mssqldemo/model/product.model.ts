@@ -70,6 +70,7 @@ export default class ProductModel extends BaseModel {
     count: number,
     unitPrice: string,
     name: string,
+    category: string,
     filename?: string | null
   ) {
     const pool = await this.getPool();
@@ -81,10 +82,11 @@ export default class ProductModel extends BaseModel {
       .input("unitPrice", sql.VarChar, unitPrice)
       .input("name", sql.NVarChar, name)
       .input("rId", sql.Char, rId)
+      .input("category", sql.NVarChar, category)
       .input("image", sql.Text, filename)
       .query(
-        "INSERT INTO Product(pId, pCount, unitPrice, pName, rId, image) " +
-          "VALUES(@pId, @count, @unitPrice, @name, @rId, @image)"
+        "INSERT INTO Product(pId, pCount, unitPrice, pName, rId, image, Category) " +
+          "VALUES(@pId, @count, @unitPrice, @name, @rId, @image, @category)"
       );
   }
 
@@ -94,6 +96,7 @@ export default class ProductModel extends BaseModel {
     count: number,
     unitPrice: string,
     name: string,
+    category: string,
     filename?: string | null
   ) {
     const pool = await this.getPool();
@@ -104,9 +107,10 @@ export default class ProductModel extends BaseModel {
       .input("unitPrice", sql.VarChar, unitPrice)
       .input("name", sql.NVarChar, name)
       .input("rId", sql.Char, rId)
+      .input("category", sql.NVarChar, category)
       .input("image", sql.Text, filename)
       .query(
-        "UPDATE Product SET pCount=@count, unitPrice=@unitPrice, pName=@name, image=@image WHERE pId=@pId AND rId=@rId"
+        "UPDATE Product SET pCount=@count, unitPrice=@unitPrice, pName=@name, image=@image, Category=@category WHERE pId=@pId AND rId=@rId"
       );
   }
 
