@@ -62,7 +62,7 @@ export default class ProductModel extends BaseModel {
     return pool
       .request()
       .input("category", sql.VarChar, category)
-      .query("SELECT * FROM Product WHERE Category = @category");
+      .query("SELECT * FROM Product WHERE Category = @category AND (pCount >= 0 OR pCount IS NULL)");
   }
 
   async createProduct(
