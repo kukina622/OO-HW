@@ -104,7 +104,7 @@ export default class MemberController extends BaseController {
 
       res.json({ result: "error" });
     } catch (error) {
-      res.status(400).json({ error: error });
+      res.status(400).json({ error: (error as any).message });
     }
   }
 
@@ -179,7 +179,7 @@ export default class MemberController extends BaseController {
       }
       throw new Error("更新失敗");
     } catch (error) {
-      res.status(400).json({ error: error });
+      res.status(400).json({ error: (error as any).message });
     }
   }
 
@@ -205,7 +205,7 @@ export default class MemberController extends BaseController {
 
       throw new Error("更新失敗");
     } catch (error) {
-      res.status(400).json({ error: error });
+      res.status(400).json({ error: (error as any).message });
     }
   }
 }

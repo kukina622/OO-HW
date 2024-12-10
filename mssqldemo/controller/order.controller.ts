@@ -46,7 +46,7 @@ export default class OrderController extends BaseController {
         }, {});
       res.json(Object.values(orders));
     } catch (error) {
-      res.json({ error });
+      res.json({ error: (error as any).message });
     }
   }
 
