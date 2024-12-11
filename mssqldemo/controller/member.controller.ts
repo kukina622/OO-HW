@@ -40,7 +40,7 @@ export default class MemberController extends BaseController {
       return;
     }
     if (req.session.rId) {
-      res.redirect("/manager");
+      res.redirect("/manager/order");
       return;
     }
     res.render("login");
@@ -61,7 +61,7 @@ export default class MemberController extends BaseController {
     if (manager.recordset.length > 0) {
       req.session.rId = manager.recordset[0].rId;
       req.session.name = manager.recordset[0].rName;
-      res.redirect("/manager");
+      res.redirect("/manager/order");
       return;
     }
 
