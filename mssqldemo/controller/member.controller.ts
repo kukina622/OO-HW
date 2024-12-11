@@ -82,7 +82,9 @@ export default class MemberController extends BaseController {
     try {
       const body = req.body;
       const members = await this.memberModel.getMemberByEmail(body.email);
-      if (members.recordset.length > 0) {
+      const managers = await this.memberModel.getManagerByEmail(body.email);
+
+      if (members.recordset.length > 0 || managers.recordset.length > 0) {
         res.json({ result: "account-existed" });
         return;
       }
@@ -145,7 +147,9 @@ export default class MemberController extends BaseController {
     }
     
     const members = await this.memberModel.getMemberByEmail(email);
-    if (members.recordset.length > 0) {
+    const managers = await this.memberModel.getManagerByEmail(email);
+
+    if (members.recordset.length > 0 || managers.recordset.length > 0) {
       res.json({ result: "account-existed" });
       return;
     }

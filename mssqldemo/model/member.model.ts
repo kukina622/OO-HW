@@ -35,6 +35,14 @@ export default class MemberModel extends BaseModel {
       .query("select * from Member where mEmail = @email");
   }
 
+  async getManagerByEmail(email: string) {
+    const pool = await this.getPool();
+    return pool
+      .request()
+      .input("email", sql.VarChar, email)
+      .query("select * from Manager where email = @email");
+  }
+
   async createMember(
     email: string,
     password: string,
